@@ -1,9 +1,11 @@
 /*
- * main.c
- * The main program to run the 2D Hydrodynamics solver
- *
- *  Created on: Jan 16, 2020
- *   Author: Pokharel, Sagar
+ ============================================================================
+ Name        : main.c
+ Author      : Sagar Pokharel
+ Version     :
+ Copyright   :
+ Description : 2D Euler Solver with Energy Addition
+ ============================================================================
  */
 
  // Standard Libraries
@@ -27,8 +29,6 @@
 #define GAMMA 1.4
 #define c_v 0.718*1000
 #define RHO 1.225
-
-
 
 int main(){
 
@@ -250,9 +250,8 @@ int main(){
         }
 
 
-					// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
-
-					// ----------------------------------- start
+//// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
+//// ----------------------------------- start
 //
 //                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
 //                    Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
@@ -270,39 +269,13 @@ int main(){
 //						        }
 //				            }
 //                    }
-//// -------------- END-- TVD RK
+//// -------------- END-TVD RK
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
 
 
-		// CHECK IF Values are negative
-
-//	for (i=0; i < nc_row ; i++){
-//				for (j=0; j < nc_col ; j++){
-//		if (p[i][j] < 0.0 && fabs(p[i][j]) > 1.0e-4){
-//
-//							printf("\nPressure Negative = %f \n" , p[i][j] );
-//							exit(1);
-//							//p[i][j] = 1.0e-7 ;
-//						}
-//
-////						if (r[i][j] < 0.0 && fabs(r[i][j]) < 0.001){
-////
-////							printf("\n Density Was  Negative = %f \n" , r[i][j] );
-////
-////							//r[i][j] = 0.0 ;
-////						}
-//
-//						if (r[i][j] < 0.0 && fabs(r[i][j]) > 0.1){
-//
-//							printf("\ndensity Negative = %f \n" , r[i][j] );
-//							exit(1);
-//							//r[i][j] = 0.0 ;
-//						}
-//
-//				}
-//	}
+		// CHECK IF Values are negative HERE
 
 
         // UPDATE CONSERVATIVE VARIABLES FOR NEXT INTEGRATION STEP
@@ -372,8 +345,6 @@ int main(){
         }
    }
    fclose(fp);
-
-
 
     return 0;
 }

@@ -10,47 +10,33 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <cblas.h>
 #include <math.h>
-//#include <gsl/gsl_matrix.h>
 #include "2Dsolver.h"
 
 void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v, double t[][nc_col]){
-//	'''
-	// Returns t as the solution for temperature
-//    Calculate Temperature from the conserved variables
-//    Use C_v, and total energy per unit volume, density and velocity
-//    '''
-	int i,j;//, nc_row , nc_col;
+/*
+    Returns t as the solution for temperature
+    Calculate Temperature from the conserved variables
+    Use C_v, and total energy per unit volume, density and velocity
+*/
+	int i,j;
 	double tot_energy , rho , vel_x , vel_y;
-
-//	nc_row = sizeof(q[0])/sizeof(q[0][0]);
-//	nc_col = sizeof(q[0][0])/sizeof(q[0][0][0]);
-
-
 	for (i=0; i < nc_row ; i++){
 		for (j=0; j < nc_col ; j++){
 			tot_energy = q[3][i][j];
 			rho = q[0][i][j];
 			vel_x = q[1][i][j] / rho ;
 			vel_y = q[2][i][j] / rho ;
-
 			t[i][j] = (tot_energy - 0.5 * rho * (vel_x*vel_x + vel_y*vel_y))/(rho*c_v) ;
 
 		}
 	}
-
 }
 
 
 void concalculate(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double gamma,double q[][nc_row][nc_col]){
-    //## assemble all props in q, with conserved variables
+    // assembles all properties in q, with conserved variables
 	int i,j;
-//	int nc_row, nc_col ;
-
-//	nc_row = sizeof(q[0])/sizeof(q[0][0]);
-//	nc_col = sizeof(q[0][0])/sizeof(q[0][0][0]);
-
 
 	for (i=0; i < nc_row ; i++){
 			for (j=0; j < nc_col ; j++){
@@ -60,28 +46,17 @@ void concalculate(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],
 				q[3][i][j] = (p[i][j]/(gamma - 1)) + 0.5 * r[i][j] * ( u[i][j]*u[i][j] + v[i][j]*v[i][j] );
 			}
 		}
-
 	}
 
 
 double superbee(double r,double gl,double gr)
-// double r, gl, gr;
+    // Slope Limiter SUPERBEE to use for MUSCL reconstruction
 {
-
     double et = 0.0;
 
-    if (r<=0.0){
-        et = 0;
-        }
-
-    else if (r>=0 && r<= 0.5){
-            et = 2.0*r;
-        }
-
-    else if (r>0.5 && r<= 1.0){
-            et = 1.0;
-        }
-
+    if (r<=0.0){et = 0;}
+    else if (r>=0 && r<= 0.5){et = 2.0*r;}
+    else if (r>0.5 && r<= 1.0){et = 1.0;}
     else if (r > 1.0){
              et = fmin(fmin(r,gr),2.0);
         }
@@ -91,67 +66,46 @@ double superbee(double r,double gl,double gr)
 
 
 double ultrabee(double r,double gl,double gr){
+    // Slope Limiter ULTRABEE to use for MUSCL reconstruction
     double et = 0.0;
 
-    if (r<=0.0){
-        et = 0.0;
-    }
-    else if(r>0.0){
-        et = fmin(gl,gr);
-    }
+    if (r<=0.0){et = 0.0;}
+    else if(r>0.0){et = fmin(gl,gr);}
     return et;
 
-	}
+}
 
 double vanLeer(double r,double gl,double gr){
+    // Slope Limiter VANLEER to use for MUSCL reconstruction
     double et = 0.0;
 
-    if (r<=0.0){
-        et = 0.0;
-    }
+    if (r<=0.0){et = 0.0;}
     else if(r>0.0){
-        et = fmin(((2.0*r)/(1.0+r)),gr);
-    }
+        et = fmin(((2.0*r)/(1.0+r)),gr);}
     return et;
 
-	}
+}
 
-	//----------
 
 double vanAlbada(double r,double gl,double gr){
 
-//    Purpose: to compute a VAN ALBADA type slope limiter DELTA
-
-
-
-//    Declaration of variables
+    //    Purpose: to compute a VAN ALBADA type slope limiter DELTA
     double et = 0.0;
 
-    if (r<=0.0){
-        et = 0.0;
-    }
+    if (r<=0.0){et = 0.0;}
     else if(r>0.0){
         et = fmin((r*(1.0+r)/(1+r*r)),gr);
     }
-
-   // printf("et = %f\n",et);
     return et;
+}
 
 
+double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],
+                    double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n){
+//     provides dt required to maintain the provided CFL
+//     n is number of time steps
 
-	}
-	//-----------
-
-double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n){
-//    ## provides dt required for CFL
-//    ## n is number of time steps
-
-	int i,j;//,nc_row, nc_col;
-
-
-
-//	nc_row = sizeof(r)/sizeof(r[0]);
-//	nc_col = sizeof(r[0])/sizeof(r[0][0]);
+	int i,j;
 
 	double dx[nc_col], dy[nc_row] , dt;
 	double spc , mspc , dts , mspcx, mspcy;
@@ -163,126 +117,52 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	for (i=0; i< nc_row ; i ++){
 			dy[i] = y[i+1]-y[i];
 		}
-
-
 	// Largest time limit here
 	dt = 1.0E12; // large number
 
 	for (i=0; i < nc_row ; i++){
-				for (j=0; j < nc_col ; j++){
+        for (j=0; j < nc_col ; j++){
+            spc = sqrt(gamma*p[i][j]/r[i][j]);
+            if ( !(isfinite(spc)) ){spc = 0.0 ;}
+            mspc = sqrt(u[i][j]*u[i][j]+v[i][j]*v[i][j]) + spc ;
+            // Individual Wave Speed Calculation
+			//	mspcx = sqrt(u[i][j]*u[i][j]) + spc ;
+			//	mspcy = sqrt(v[i][j]*v[i][j]) + spc ;
 
-					spc = sqrt(gamma*p[i][j]/r[i][j]);
-   //               if ( !(isfinite(spc)) || fabs(r[i][j]) < 1.0e-6 ){spc = 0.0 ;} // when pressure and density both decrease rapidly
-					mspc = sqrt(u[i][j]*u[i][j]+v[i][j]*v[i][j]) + spc ;
-//					mspcx = sqrt(u[i][j]*u[i][j]) + spc ;
-	//				mspcy = sqrt(v[i][j]*v[i][j]) + spc ;
+            dts = fmin((CFL*dx[j] / mspc),(CFL*dy[i]/ mspc));
 
-					dts = fmin((CFL*dx[j] / mspc),(CFL*dy[i]/ mspc)) ;
+            if ((isfinite(dts)) && dts > 0.0 ){
+			dt  = fmin( dts , dt);
+            }
+	    }
 
-
-
-					if (!(isfinite(dts)) || dts <= 0.0 ){
-//						# dt = CFL*numpy.max(dx)
-                    //    printf("TIME STEP CALCULATION , NEGATIVE OR NOT FINITE \n");
-						//dt = 1e-5;
-
-					}
-					else{
-
-                        dt  = fmin( dts , dt);
-
-
-				}
-
+        // Time Steps for first Initial Times
+        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-6 || n <= 5){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 1e-3 * 1.0e-6;
+		}
 
     }
-
-
-	}
-
-    if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-6 || n <= 5){
-//						# dt = CFL*numpy.max(dx)
-    printf("TIME STEP CALCULATED = %0.5e  \n" , dt);
-						dt = 1e-3 * 1.0e-6;
-				}
-
-
-//				else{
-//
-//                    dt = fmin(dts , dt);
-//				}
-
-// if (p[(int)(nc_row/2)][(int)(nc_col/2)] < 10.0 && n > 10){
-////
-//				dt = 1e-7;
-//
-//
-//		}
-
-//dt = 1e-8 ;
-
-    printf("dt = %0.15f \n ",dt);
 
     return dt;
 }
 
 
-void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double s[][nc_col]){
+void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma,
+                     double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double s[][nc_col]){
 
 	int i,j;
 
-//	int nc_row, nc_col;
-
-//	nc_row = sizeof(q[0])/sizeof(q[0][0]);
-//	nc_col = sizeof(q[0][0])/sizeof(q[0][0][0]);
-
-
 	for (i=0; i < nc_row ; i++){
-					for (j=0; j < nc_col ; j++){
+        for (j=0; j < nc_col ; j++){
 
-						r[i][j] = q[0][i][j];
-						u[i][j] = q[1][i][j]/r[i][j];
-						v[i][j] = q[2][i][j]/r[i][j];
-						p[i][j] = (gamma - 1)*(q[3][i][j] - 0.5*r[i][j]*(u[i][j]*u[i][j] + v[i][j]*v[i][j]));
-						s[i][j] = sqrt(u[i][j]*u[i][j] + v[i][j]*v[i][j]);
-
-//						if (p[i][j] < 0.0 ){ p[i][j] = 1.0e-18 ;}
-//						if (r[i][j] < 0.0 ){ r[i][j] = 1.0e-18 ;}
-
-//						if (p[i][j] < 0.0 && fabs(p[i][j]) < 1e-8){
-//
-//							printf("\nPressure Was slighty Negative = %f \n" , p[i][j] );
-//
-//							p[i][j] = 0.0 ;
-//						}
-// ________--- START-- COMMENT---PRESSURE COMES NEGATIVE------------
-//						if (p[i][j] < 0.0 && fabs(p[i][j]) > 10.0){
-//
-//							printf("\nPressure Negative = %f \n" , p[i][j] );
-//							exit(1);
-//							//p[i][j] = 0.0 ;
-//						}
-//
-////						if (r[i][j] < 0.0 && fabs(r[i][j]) < 0.001){
-////
-////							printf("\n Density Was slighty Negative = %f \n" , r[i][j] );
-////
-////							r[i][j] = 0.0 ;
-////						}
-//
-//						if (r[i][j] < 0.0 && fabs(r[i][j]) > 0.1){
-//
-//							printf("\ndensity Negative = %f \n" , r[i][j] );
-//							exit(1);
-//							r[i][j] = 0.0 ;
-//						}
-
-						//-------------------------- END ------- COMMENT
-//						printf("\n %g  %g  %g  %g \n",r[i][j],u[i][j],v[i][j],p[i][j]);
+            r[i][j] = q[0][i][j];
+            u[i][j] = q[1][i][j]/r[i][j];
+            v[i][j] = q[2][i][j]/r[i][j];
+            p[i][j] = (gamma - 1)*(q[3][i][j] - 0.5*r[i][j]*(u[i][j]*u[i][j] + v[i][j]*v[i][j]));
+            s[i][j] = sqrt(u[i][j]*u[i][j] + v[i][j]*v[i][j]);
 		}
-
 	}
-
 }
 
 
@@ -291,112 +171,69 @@ void sing_prmcalculate(double q[],double gamma, double *r,double *u,double *v,do
     *u = q[1]/ (*r) ;
     *v = q[2]/ (*r) ;
     *p = (gamma - 1)*(q[3] - 0.5 * (*r) * ((*u) * (*u) + (*v) * (*v))) ;
-
-//    if (*p < 0.0 && fabs(*p) > 0.01){ *p = 1.0e-18 ;}
-//    if (*r < 0.0 && fabs(*r) > 0.01){ *r = 1.0e-18 ;}
-
-//    return r,u,v,p
-
 }
 
 
 void x_fun_flux(double qre[],double gamma,double ff[]){
-//
-//    ## Define the function that calculates the flux FOR 2D
-//    ## At a time flux of only 1 element in each row is calculated
-//    ## a = wave speed
+    //    ## Define the function that calculates the flux FOR one direction - X
+    //    ## At a time flux of only 1 element in each row is calculated
+    //    ## a = wave speed
+    //    ## Returns ff
 
-		double rre, ure, vre, pre ;
-//    ff = numpy.zeros_like(qre);
-//
-//		int i,j;
-//
-//		int nc_row, nc_col;
-//
-//		nc_row = sizeof(q[0])/sizeof(q[0][0]);
-//		nc_col = sizeof(q[0][0])/sizeof(q[0][0][0]);
-//
-//
-//		for (i=0; i < nc_row ; i++){
-//						for (j=0; j < nc_col ; j++){
-//#     rre,ure,pre = prmcalculate(qre,gamma)
+    double rre, ure, vre, pre ;
 
-			rre = qre[0];
-			ure = qre[1]/rre;
-			vre = qre[2]/rre;
-			pre = (gamma - 1)*(qre[3] - 0.5*rre*(ure*ure + vre*vre));
+    rre = qre[0];
+    ure = qre[1]/rre;
+    vre = qre[2]/rre;
+    pre = (gamma - 1)*(qre[3] - 0.5*rre*(ure*ure + vre*vre));
 
 
-//    ## q[3] = E :: Totaal Energy Per Unit Volume
-//
-//    ## FLUX FOR EACH EQUATION
+    //    ## q[3] = E :: Totaal Energy Per Unit Volume
+    //    ## FLUX FOR EACH EQUATION
 
     ff[0] = qre[1] ; //## Contuinity Flux
     ff[1] = ff[0]*ure + pre ; //## X-momentum Flux
-    ff[2] = ff[0]*vre ;
+    ff[2] = ff[0]*vre;
     ff[3] = (ure)*(qre[3]+pre) ;
-
-//    return ff
-
 }
 
 
 void y_fun_flux(double qre[],double gamma,double ff[]){
-//
-//    ## Define the function that calculates the flux FOR 2D
-//    ## At a time flux of only 1 element in each row is calculated
-//    ## a = wave speed
+    //    ## Define the function that calculates the flux FOR one direction - Y
+    //    ## At a time flux of only 1 element in each row is calculated
+    //    ## a = wave speed
+    //    ## Returns ff
 
-		double rre, ure, vre, pre ;
-//    ff = numpy.zeros_like(qre);
-//
-//		int i,j;
-//
-//		int nc_row, nc_col;
-//
-//		nc_row = sizeof(q[0])/sizeof(q[0][0]);
-//		nc_col = sizeof(q[0][0])/sizeof(q[0][0][0]);
-//
-//
-//		for (i=0; i < nc_row ; i++){
-//						for (j=0; j < nc_col ; j++){
-//#     rre,ure,pre = prmcalculate(qre,gamma)
-
-			rre = qre[0];
-			ure = qre[1]/rre;
-			vre = qre[2]/rre;
-			pre = (gamma - 1)*(qre[3] - 0.5*rre*(ure*ure + vre*vre));
+    double rre, ure, vre, pre ;
 
 
-//    ## q[3] = E :: Totaal Energy Per Unit Volume
-//
-//    ## FLUX FOR EACH EQUATION
+    rre = qre[0];
+    ure = qre[1]/rre;
+    vre = qre[2]/rre;
+    pre = (gamma - 1)*(qre[3] - 0.5*rre*(ure*ure + vre*vre));
+
+    //    ## q[3] = E :: Totaal Energy Per Unit Volume
+    //    ## FLUX FOR EACH EQUATION
 
     ff[0] = qre[2] ; //## Contuinity Flux
     ff[1] = ff[0]*ure ; //## X-momentum Flux
     ff[2] = ff[0]*vre  + pre  ;
     ff[3] = (vre)*(qre[3]+pre) ;
-
-//    return ff
-
 }
 
 
 void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double GAMMA, double *SL , double *SM , double *SR){
-
-
-
-//#     Purpose: to compute wave speed estimates for the HLLC Riemann
-//#               solver using and adaptive approximate-state Riemann
-//#               solver including the PVRS, TRRS and TSRS solvers.
-//#               See Section 9.5, Chapter 9 of Ref. 1
+    //#     Purpose: to compute wave speed estimates for the HLLC Riemann
+    //#               solver using and adaptive approximate-state Riemann
+    //#               solver including the PVRS, TRRS and TSRS solvers.
+    //#               See Section 9.5, Chapter 9 of Ref. 1
+    //#     Returns SL, SM , SR
 
 	double  G1,G2,G3,G4,G5,G6,G7,QUSER;
 	double CL, CR, CUP, PPV ,PMIN,PMAX,QMAX,PM,UM, PQ,PTL,PTR,GEL,GER;
 
 
     QUSER = 2.0; //##<<<<<<<<<<<< Select yourself
-//#
 
     CL = sqrt(GAMMA*PL/DL);
     CR = sqrt(GAMMA*PR/DR);
@@ -410,8 +247,6 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
     G7 = (GAMMA - 1.0)/(2.0);
 
 //#      Compute guess pressure from PVRS Riemann solver
-//#
-
     CUP  = 0.25*(DL + DR)*(CL + CR);
     PPV  = 0.5*(PL + PR) + 0.5*(UL - UR)*CUP;
     PPV  = fmax(0.0, PPV);
@@ -421,18 +256,14 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 
     if (QMAX<=QUSER && (PMIN<=PPV &&  PPV<=PMAX)){
 
-//# *
-//#         Select PVRS Riemann solver
-//# *
+//         Select PVRS Riemann solver
          PM = PPV;
          UM = 0.5*(UL + UR) + 0.5*(PL - PR)/CUP;
     }
 
     else{
-        if(PPV<PMIN){
-//    # *
-//    # C  Select Two-Rarefaction Riemann solver
-//    # *
+        if(PPV<PMIN){  
+            // Select Two-Rarefaction Riemann solver   
             PQ  = pow((PL/PR),G1);
             UM  = (PQ*UL/CL + UR/CR + G4*(PQ - 1.0))/(PQ/CL + 1.0/CR);
             PTL = 1.0 + G7*(UL - UM)/CL;
@@ -440,10 +271,7 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
             PM  = 0.5*(pow(PL*PTL,G3) + pow(PR*PTR,G3));
         }
         else{
-
-//# *
-//#      Use Two-Shock Riemann solver with PVRS as estimate
-//# *
+            //   Use Two-Shock Riemann solver with PVRS as estimate
             GEL = sqrt((G5/DL)/(G6*PL + PPV));
             GER = sqrt((G5/DR)/(G6*PR + PPV));
             PM  = (GEL*PL + GER*PR - (UR - UL))/(GEL + GER);
@@ -451,7 +279,7 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
         }
 
     }
-//        ## Estimate wave speeds
+        // Estimate wave speeds
     if (PM<PL){
         *SL = UL - CL;
     }
@@ -459,7 +287,6 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
     else{
         *SL = UL - CL*sqrt(1.0 + G2*(PM/PL - 1.0));
     }
-
 
     *SM = UM;
 
@@ -469,20 +296,13 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
     else {
         *SR = UR + CR*sqrt(1.0 + G2*(PM/PR - 1.0));
     }
-
-//    return SL,SM,SR
-
 }
-
-
-
 
 
 void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,double xre[], double yre[] ,double dt,double gamma,  double accu[4][nrec_row][nrec_col]){// ## add what is needed
 //    '''
 //    -----------------------------------------------------------------------------------------------------
-//    >>>>>>>>>>>>  d/dt () + F(net) = 0 <<<<<<<<<<<<<<<<<<<<<
-
+//    >>>>>>>>>>>>  d/dt () + F(net) = 0 <<<<<<<<<<<<<<<<<<<<
 //    ## u = vector of the property at centroid points
 //    ## cx contains the points in reference to the centroids
 //    ## x locates the faces from the cells, so size of x is one more than that of cx
@@ -491,13 +311,13 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 //    ## Free parameter in real interval [-1,1]
 //    ## for w = 0, central difference approximation is achieved
 //    ## a is wavespeed
-//
-// 		accu[4][nrec_row][nrec_col] RETURNS ON THIS ARRAY
+// 	accu[4][nrec_row][nrec_col] RETURNS ON THIS ARRAY
 //    ------------------------------------------------------------------------------------------------'''
-//    # initialization
+
+    //    # initialization
 	int i,j,k;
 
-//	int nrec_row, nrec_col;
+    //	int nrec_row, nrec_col;
 	int nre_row,nre_col;
 
 	int nc_row,nc_col,nx,ny;
@@ -537,7 +357,7 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 
     double sx[4][nc_row][nc_col],sy[4][nc_row][nc_col],c[4][nc_row][nc_col];
 
-//## with ghost cells (2 left, 2 right, 2 up, 2 down)
+    //## with ghost cells (2 left, 2 right, 2 up, 2 down)
     double r[nc_row][nc_col],u[nc_row][nc_col],v[nc_row][nc_col],p[nc_row][nc_col],E[nc_row][nc_col],a[nc_row][nc_col] ;
 
     double cflx[nc_row][nc_col], cfly[nc_row][nc_col];
@@ -2075,4 +1895,3 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 }
 }
 
-/// END RUSONOV
