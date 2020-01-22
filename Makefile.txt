@@ -1,0 +1,13 @@
+CC = gcc
+CFLAGS = -Wall -lm
+DEPS = 2Dsolver.h
+OBJ = 2Dsolver.o main.o
+
+main.out: $(OBJ)
+	gcc $(CFLAGS) -o main.o 2Dsolver.o
+
+main.o: main.c
+	$(CC) $(CFLAGS) -c main.c
+
+2Dsolver.o: 2Dsolver.c
+	$(CC) $(CFLAGS) -c 2Dsolver.c
