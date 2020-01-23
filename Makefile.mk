@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g  #-Wl,--stack,1677721600000
-STACK = #-Wl,--stack,1677721600000
+STACK = -Wl,--stack,1677721600000
 LINK = -lm #Stack Size set
 
 EXT = 

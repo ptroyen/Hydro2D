@@ -105,10 +105,16 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 //     provides dt required to maintain the provided CFL
 //     n is number of time steps
 
+    // double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
+    //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
+    //
+
 	int i,j;
 
-	double dx[nc_col], dy[nc_row] , dt;
-	double spc , mspc , dts , mspcx, mspcy;
+	// Dynamically Allocate the array : So that large arrays are not stored in stack
+	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
+	// double dx[nc_col], dy[nc_row], dt;
+	double dt , spc , mspc , dts , mspcx, mspcy;
 
 	for (i=0; i< nc_col ; i ++){
 		dx[i] = x[i+1]-x[i];
@@ -143,6 +149,11 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 		}
 
     }
+
+
+    // Free the allocated memory for dx and dy
+    free(dx);
+    free(dy);
 
     return dt;
 }
@@ -262,8 +273,8 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
     }
 
     else{
-        if(PPV<PMIN){  
-            // Select Two-Rarefaction Riemann solver   
+        if(PPV<PMIN){
+            // Select Two-Rarefaction Riemann solver
             PQ  = pow((PL/PR),G1);
             UM  = (PQ*UL/CL + UR/CR + G4*(PQ - 1.0))/(PQ/CL + 1.0/CR);
             PTL = 1.0 + G7*(UL - UM)/CL;
@@ -341,21 +352,40 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     ny = nre_col + 4 ;
 
 
+     //// double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
+    //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
+    //	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
+
+
+
     // Real cells
     // flux and accumulation initialization
-    double Flux[4][nre_row][nre_col], xflux[4][nrec_row][nre_col],yflux[4][nre_row][nrec_col];
-    double drex[nrec_col],drey[nrec_row], vol_re[nrec_row][nrec_col];
-    double rre[nrec_row][nrec_col],ure[nrec_row][nrec_col],vre[nrec_row][nrec_col],pre[nrec_row][nrec_col];
+    double (*Flux)[nre_row][nre_col] = malloc(sizeof(double[4][nre_row][nre_col])),
+         (*xflux)[nrec_row][nre_col] = malloc(sizeof(double[4][nrec_row][nre_col])),
+         (*yflux)[nre_row][nrec_col] = malloc(sizeof(double[4][nre_row][nrec_col])); // <--- allocate mem
 
+    double (*drex)= malloc(sizeof(double[nrec_col])),
+            (*drey)=malloc(sizeof(double[nrec_row])),
+            (*vol_re)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])) ; // < --- alocate mem
 
+    double (*rre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+            (*ure)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+            (*vre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+            (*pre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])); // < --- allocate mem
 
     // Initialization of values including ghost cells
+    double (*q)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col])),
+            (*x)=malloc(sizeof(double[nx])),
+             (*y)=malloc(sizeof(double[ny]));
 
-    double q[4][nc_row][nc_col], x[nx], y[ny];
+    double (*qirx)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col])),
+            (*qilx)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col])),
+            (*qiry)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col])),
+            (*qily)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col]));
 
-    double qirx[4][nc_row][nc_col],qilx[4][nc_row][nc_col],qiry[4][nc_row][nc_col],qily[4][nc_row][nc_col];
-
-    double sx[4][nc_row][nc_col],sy[4][nc_row][nc_col],c[4][nc_row][nc_col];
+    double (*sx)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col])),
+        (*sy)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col])),
+        (*c)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col]));
 
     //## with ghost cells (2 left, 2 right, 2 up, 2 down)
     double r[nc_row][nc_col],u[nc_row][nc_col],v[nc_row][nc_col],p[nc_row][nc_col],E[nc_row][nc_col],a[nc_row][nc_col] ;
@@ -839,6 +869,17 @@ double dxr, dxl, dyu, dyd ;
 //    ## direct flux contribution in time rate of change of the property, after this integrate in time
 //    dudt = accu
 //    return dudt
+
+   // double (*Flux)[nre_row][nre_col] = malloc(sizeof(double[4][nre_row][nre_col])), (*xflux)[nrec_row][nre_col] = malloc(sizeof(double[4][nrec_row][nre_col])),(*yflux)[nre_row][nrec_col] = malloc(sizeof(double[4][nre_row][nrec_col])); // <--- allocate mem
+    // double (*rre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+//            (*ure)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+//            (*vre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+//            (*pre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col]));
+
+
+    free(Flux); free(xflux);  free(yflux);
+    free(ure); free(vre); free(pre);
+    free(q); free(x); free(y);
 
 }
 

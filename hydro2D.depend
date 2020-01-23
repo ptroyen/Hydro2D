@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1579807523 source:c:\users\pokha\work\code\gits\hydro2d\2dsolver.c
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	"2Dsolver.h"
+
+1579564192 c:\users\pokha\work\code\gits\hydro2d\2dsolver.h
+
+1579807523 source:c:\users\pokha\work\code\gits\hydro2d\main.c
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	"2Dsolver.h"
+
