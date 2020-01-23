@@ -1,24 +1,26 @@
 CC = gcc
-CFLAGS = -Wall -g -lm -Wl,--stack,1677721600000
-LINK = -Wl,--stack,1677721600000 #Stack Size set
-EXT = exe
+CFLAGS = -Wall -g  #-Wl,--stack,1677721600000
+STACK = #-Wl,--stack,1677721600000
+LINK = -lm #Stack Size set
 
-DEPS = solver.h
-OBJ = solver.o main.o
+EXT = 
+
+DEPS = 2Dsolver.h
+OBJ = 2Dsolver.o main.o
 
 #main: $(OBJ)
-#	$(CC) $(CFLAGS) -o main solver.o main.o
+#	$(CC) $(CFLAGS) -o main 2Dsolver.o main.o
 main: $(OBJ)
-	gcc $(CFLAGS) -o $@ $^
+	gcc $(CFLAGS) $(STACK) -o $@ $^ $(LINK)
 
-#main.o: main.c solver.h
+#main.o: main.c 2Dsolver.h
 #	$(CC) $(CFLAGS) -c main.c
-#solver.o: solver.c solver.h
-#	$(CC) $(CFLAGS) -c solver.c
+#2Dsolver.o: sDolver.c 2Dsolver.h
+#	$(CC) $(CFLAGS) -c 2Dsolver.c
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY : clean
 clean :
-	-rm $(OBJ) main.$(EXT)
+	-rm $(OBJ) main

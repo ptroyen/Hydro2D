@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as pyplot
 
-# X = np.loadtxt("testout.txt")[:, 0]
-# Y = np.loadtxt("testout.txt")[:, 1]
-# R = np.loadtxt("testout.txt")[:, 2]
-# U = np.loadtxt("testout.txt")[:, 3]
-# V = np.loadtxt("testout.txt")[:, 4]
-# P = np.loadtxt("testout.txt")[:, 5]
-# E = np.loadtxt("testout.txt")[:, 6]
+X = np.loadtxt("testout.txt")[:, 0]
+Y = np.loadtxt("testout.txt")[:, 1]
+R = np.loadtxt("testout.txt")[:, 2]
+U = np.loadtxt("testout.txt")[:, 3]
+V = np.loadtxt("testout.txt")[:, 4]
+P = np.loadtxt("testout.txt")[:, 5]
+E = np.loadtxt("testout.txt")[:, 6]
 
 
 
@@ -21,19 +21,19 @@ import matplotlib.pyplot as pyplot
 # E = np.loadtxt("initial.txt")[:, 6]
 
 
-X = np.loadtxt("2.txt")[:, 0]
-Y = np.loadtxt("2.txt")[:, 1]
-R = np.loadtxt("2.txt")[:, 2]
-U = np.loadtxt("2.txt")[:, 3]
-V = np.loadtxt("2.txt")[:, 4]
-P = np.loadtxt("2.txt")[:, 5]
-E = np.loadtxt("2.txt")[:, 6]
+# X = np.loadtxt("2.txt")[:, 0]
+# Y = np.loadtxt("2.txt")[:, 1]
+# R = np.loadtxt("2.txt")[:, 2]
+# U = np.loadtxt("2.txt")[:, 3]
+# V = np.loadtxt("2.txt")[:, 4]
+# P = np.loadtxt("2.txt")[:, 5]
+# E = np.loadtxt("2.txt")[:, 6]
 
 ## COL 4
 ## ROW 3
 
-nc_row = 400
-nc_col = 400
+nc_row = 100
+nc_col = 100
 
 ncx = nc_col
 ncy = nc_row

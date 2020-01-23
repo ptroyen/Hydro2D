@@ -1257,8 +1257,6 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
             centroid_x[i] = 0.5 * (x[i+1] + x[i]);
 //# CFL number for each cell needed for sign calculation
 
-
-
     }
 
     for(i=0 ; i < nc_row ; i++){
@@ -1274,6 +1272,13 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
             source_accu[i][j] = 0.0 ;
         }
     }
+
+
+
+/// Tear Drop Shape Energy Addition and Evolution in Time Study Case
+
+
+
 
 
    // ## MESH Definition Matrix For X's and Y's
