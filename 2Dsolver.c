@@ -1332,6 +1332,8 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
     //double xflux[nc_row][n_col] , yflux[n_row][nc_col] ;
     double (*drex)=malloc(sizeof(double[nc_col])), (*drey)=malloc(sizeof(double[nc_row])) ,
      (*centroid_x)=malloc(sizeof(double[nc_col])) , (*centroid_y)=malloc(sizeof(double[nc_row])) , vol;
+	 
+	 double che , midx , midy , fac_tear;
 //    source_accu = numpy.zeros([nc_row,nc_col])
 
 
@@ -1413,9 +1415,16 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 //    ## instant source
 //    ## first point/cell only has a source constribution
 //    ## supplied value is dudt, after this integrate in time only
+
+	fac_tear = 20000.0; // bigger means bigger width
+	midx = centroid_x[(int)(nc_col/2)];
+	midy = centroid_y[(int)(nc_row/2)];
+
+
     if (t==0.0){
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
+/// AT CENTER --------------------------------------------------
         // At Center
         vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)];
         printf("\nVOL = %lf\n", vol);
@@ -1438,6 +1447,32 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 //
 //        # source_accu[0,0] = 0.25*0.311357/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
 
+/// AT CENTER END -----------------------------------------------------------
+
+/// TEAR DROP WITH MIDDLE CIRCULAR SHAPE -------------------------------------
+
+// Tear Shape
+            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
+            vol = drex[j] * drey[i];
+            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
+
+
+
+            fac_tear = 20000.0;
+            //more intense one as well one also tear shaped
+            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
+            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+//
+//
+//            fac_tear = 100000.0;
+//            //more intense one as well one also tear shaped
+//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
+//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
+
+
+             /////// Circle at the middle lobe of tear
+            che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
+            if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
 
 
             }
