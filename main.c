@@ -32,8 +32,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 100
-#define ncy 100
+#define ncx 1000
+#define ncy 1000
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
