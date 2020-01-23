@@ -14,7 +14,7 @@
 #include <math.h>
 
 // Code Headers
-#include "2Dsolver.h"
+#include "solver.h"
 
 
 // UNIVERSAL CONSTANTS
