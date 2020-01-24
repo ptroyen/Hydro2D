@@ -112,7 +112,8 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	int i,j;
 
 	// Dynamically Allocate the array : So that large arrays are not stored in stack
-	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
+	double (*dx) = malloc(sizeof(double[nc_col])) ,
+             (*dy) = malloc(sizeof(double[nc_row]));
 	// double dx[nc_col], dy[nc_row], dt;
 	double dt , spc , mspc , dts , mspcx, mspcy;
 
@@ -471,12 +472,12 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 
 
 //			# # RIGHT TRANSMISSIVE
-//			u[i][nc_col-1] = ure[i-2][nrec_col-2];
-//			u[i][nc_col-2] = ure[i-2][nrec_col-1];
+			u[i][nc_col-1] = ure[i-2][nrec_col-2];
+			u[i][nc_col-2] = ure[i-2][nrec_col-1];
 
 ////			# # RIGHT REFLECTIVE
-			u[i][nc_col-1] = - ure[i-2][nrec_col-2];
-			u[i][nc_col-2] = - ure[i-2][nrec_col-1];
+			// u[i][nc_col-1] = - ure[i-2][nrec_col-2];
+			// u[i][nc_col-2] = - ure[i-2][nrec_col-1];
 
 			v[i][nc_col-1] = vre[i-2][nrec_col-2];
 			v[i][nc_col-2] = vre[i-2][nrec_col-1];
@@ -516,12 +517,12 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 
 
 //			# # Up TRANSMISSIVE
-//			v[nc_row-1][i] = vre[nrec_row-2][i-2];
-//			v[nc_row-2][i] = vre[nrec_row-1][i-2];
+			v[nc_row-1][i] = vre[nrec_row-2][i-2];
+			v[nc_row-2][i] = vre[nrec_row-1][i-2];
 
 ////			# # UP REFLECTIVE
-			v[nc_row-1][i] = - vre[nrec_row-2][i-2];
-			v[nc_row-2][i] = - vre[nrec_row-1][i-2];
+			// v[nc_row-1][i] = - vre[nrec_row-2][i-2];
+			// v[nc_row-2][i] = - vre[nrec_row-1][i-2];
 
 			r[nc_row-1][i] = rre[nrec_row-2][i-2];
 			r[nc_row-2][i] = rre[nrec_row-1][i-2];
@@ -611,7 +612,7 @@ double dxr, dxl, dyu, dyd ;
 		}
 	}
 
-	double TOL , dxs[nc_col] , centroid_x[nc_col] ,creq_x[nc_col], dys[nc_row] , centroid_y[nc_row] , creq_y[nc_row] ;
+	double TOL , dxs[nc_col] , centroid_x[nc_col] ,creq_x[nc_col], dys[nc_row] , centroid_y[nc_row] , creq_y[nc_row] ; //# <---- allocate mem
 
 
     TOL =  1e-6 ; // 1e-8;
@@ -887,12 +888,14 @@ double dxr, dxl, dyu, dyd ;
 
 
     free(Flux); free(xflux);  free(yflux);
-    free(ure); free(vre); free(pre);
+    free(drex); free(drey); free(vol_re);
+    free(ure); free(vre); free(pre); free(rre);
     free(q); free(x); free(y);
-    free (qirx); free(qilx); free(qily); free(qiry);
+    free(qirx); free(qilx); free(qily); free(qiry);
     free(sx); free(sy); free(c);
     free(r); free(u); free(v); free(p); free(E); free(a);
     free(cflx); free(cfly);
+    free(spc); free(mspc);
 
 }
 
@@ -1421,7 +1424,12 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 	midy = centroid_y[(int)(nc_row/2)];
 
 
+    
+
     if (t==0.0){
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
 /// AT CENTER --------------------------------------------------
@@ -1434,9 +1442,9 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
         /// LASER ENRGY DEPOSITION
         /* 1.0E-12 J/s ; For 0.01 nanoseconds energy deposited = 10 J ; */
-        source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 50* 1.0e-3 /(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
+        // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 50* 1.0e-3 /(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
 
-        printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+        // printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
 
 
 
@@ -1475,8 +1483,11 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
             if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
 
 
+                    }
+                }
             }
 
+         printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
         free(drex); free(drey); free(centroid_x); free(centroid_y);
 
 
@@ -2073,7 +2084,7 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
     	    }
 
-free(qil); free(qir);
+    free(qil); free(qir);
     free(fil); free(fir);
     free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
     free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);

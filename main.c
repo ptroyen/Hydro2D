@@ -32,8 +32,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 1000
-#define ncy 1000
+#define ncx 300
+#define ncy 300
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -48,7 +48,7 @@ int main(){
     // BASIC INITIALIZATION
     // const int ncx = 400 , ncy = 400 ;
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
-    double  l=20 * mili ,lx = l,ly = l,CFL = 0.1;
+    double  l=20 * mili ,lx = l,ly = l,CFL = 0.35;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -75,7 +75,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 6.0 * micro ;
+    tend = 500.0 * micro ;
     //CFL NO.
     //CFL = 0.1;
 
@@ -315,9 +315,9 @@ int main(){
 
 
         // WRITE DATA TO FILE
-        if ( count == 2){
+        if ( count == 1){
            fp = fopen("testout2.txt", "w+");
-           fprintf(fp,"Time =  %0.16f\n", time) ;
+           //fprintf(fp,"Time =  %0.16f\n", time) ;
             // Centroid_X		Centroid_Y		Density		Velocity_U		Velocity_V		Pressure_P		Energy_E
            for (i=0; i < nc_row ; i++){
                 for (j=0; j < nc_col ; j++){
@@ -340,6 +340,23 @@ int main(){
         }
 
 
+
+
+        if ( count % 700 == 0){
+            char title[16];
+            sprintf(title, "%d.txt", count);
+            fp = fopen(title, "w+");
+            fprintf(fp,"Time =  %0.16f\n", time);
+            for (i=0; i < nc_row ; i++){
+   				for (j=0; j < nc_col ; j++){
+                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
+                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+                }
+           }
+           fclose(fp);
+        }
+
+
     }
 
     /// INTEGRATION LOOP ENDS
@@ -347,7 +364,7 @@ int main(){
 
     // FINAL TIMESTEP RESULTS WRITE ON FILE
     fp = fopen("testout.txt", "w+");
-    fprintf(fp,"Time =  %0.16f\n", time) ;
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
             fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",

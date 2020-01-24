@@ -23,4 +23,4 @@ main: $(OBJ)
 
 .PHONY : clean
 clean :
-	-rm $(OBJ) main
+	-rm $(OBJ) main *.txt
