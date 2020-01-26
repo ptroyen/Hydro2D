@@ -1473,7 +1473,7 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 //
 //
 //            fac_tear = 100000.0;
-//            //more intense one as well one also tear shaped
+//            //more intense one as well, also tear shaped
 //            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
 //            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
 
