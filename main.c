@@ -30,6 +30,15 @@
 #define c_v 0.718*1000
 #define RHO 1.225
 
+
+// BASIC INITIALIZATION
+#define ncx 300
+#define ncy 300
+#define nx  ncx+1
+#define ny  ncy+1
+#define nc_row ncy
+#define nc_col ncx
+
 int main(){
 
     /*
@@ -37,16 +46,17 @@ int main(){
     */
 
     // BASIC INITIALIZATION
-    int ncx , ncy ;
-    int nx,ny,i,j,k,nc_row,nc_col;
-    double l,lx,ly,CFL;
-    double t0, time, tend , dt;
+    // const int ncx = 400 , ncy = 400 ;
+    // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
+    double  l=20 * mili ,lx = l,ly = l,CFL = 0.35;
+    static double  t0, time, tend , dt;
+    int i, j , k ;
 
     // Initial Conditions Storage Variables
     // LEFT and RIGHT States
-    double p0[2], u0[2], v0[2], r0[2] ;
+    static double  p0[2], u0[2], v0[2], r0[2] ;
 
-    int count = 0 ;
+    static int count = 0 ;
     FILE *fp , *fpini;
 
     // INITIALIZATION OF VARIABLES  - DONE
@@ -57,17 +67,17 @@ int main(){
 
     /// DEFINE BASIC PARAMETERS
     // domain length // 20mm for laser energy deposition
-    l = 20 * mili ;
-    lx = l;        ly = l;
+    //l = 20 * mili ;
+    //lx = l;        ly = l;
 
     // Number of Cells
-    ncx = 400;     ncy = 400 ;
+    //ncx = 400;     ncy = 400 ;
 
     // Time
     t0 = 0.0;
-    tend = 6.0 * micro ;
+    tend = 500.0 * micro ;
     //CFL NO.
-    CFL = 0.1;
+    //CFL = 0.1;
 
 ///*************************************************************
 
@@ -77,23 +87,23 @@ int main(){
     // MESH DEFINITION STARTS
 
     // ROW and COLUMN Lengths
-    nc_row = ncy;    nc_col = ncx;
+    //nc_row = ncy;    nc_col = ncx;
     // Number of interfaces
-    nx = ncx+1 ;      ny = ncy+1 ;
+    //nx = ncx+1 ;      ny = ncy+1 ;
 
     // STORAGE SIZE FIXED
     // MESH PARAMETERS
-    double dx,dy,x[nx],y[ny],cx[ncx],cy[ncy] ;
+    static double  dx,dy,x[nx],y[ny],cx[ncx],cy[ncy] ;
 
     // SOLUTION STORAGE VARIABLES
-    double p[nc_row][nc_col] , u[nc_row][nc_col] , v[nc_row][nc_col] , r[nc_row][nc_col] ;
-    double speed[nc_row][nc_col],tempr[nc_row][nc_col], E[nc_row][nc_col], a[nc_row][nc_col] ;
-    double q[4][nc_row][nc_col],qfinal[4][nc_row][nc_col],
+    static double  p[nc_row][nc_col] , u[nc_row][nc_col] , v[nc_row][nc_col] , r[nc_row][nc_col] ;
+    static double  speed[nc_row][nc_col],tempr[nc_row][nc_col], E[nc_row][nc_col], a[nc_row][nc_col] ;
+    static double  q[4][nc_row][nc_col],qfinal[4][nc_row][nc_col],
             dudt[4][nc_row][nc_col],accu_a[4][nc_row][nc_col], source_accu[nc_row][nc_col];
              // add new flux accumulation definition and pass later
 
 
-
+	double exp_ratio = 1.4
     // DEFINE the MESH
     dx = l/(nx-1);    dy = l/(ny-1);
     for(i=0; i<nx; i++){x[i] = i*dx;}
@@ -305,9 +315,9 @@ int main(){
 
 
         // WRITE DATA TO FILE
-        if ( count == 2){
+        if ( count == 1){
            fp = fopen("testout2.txt", "w+");
-           fprintf(fp,"Time =  %0.16f\n", time) ;
+           //fprintf(fp,"Time =  %0.16f\n", time) ;
             // Centroid_X		Centroid_Y		Density		Velocity_U		Velocity_V		Pressure_P		Energy_E
            for (i=0; i < nc_row ; i++){
                 for (j=0; j < nc_col ; j++){
@@ -330,6 +340,23 @@ int main(){
         }
 
 
+
+
+        if ( count % 700 == 0){
+            char title[16];
+            sprintf(title, "%d.txt", count);
+            fp = fopen(title, "w+");
+            fprintf(fp,"Time =  %0.16f\n", time);
+            for (i=0; i < nc_row ; i++){
+   				for (j=0; j < nc_col ; j++){
+                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
+                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+                }
+           }
+           fclose(fp);
+        }
+
+
     }
 
     /// INTEGRATION LOOP ENDS
@@ -337,7 +364,7 @@ int main(){
 
     // FINAL TIMESTEP RESULTS WRITE ON FILE
     fp = fopen("testout.txt", "w+");
-    fprintf(fp,"Time =  %0.16f\n", time) ;
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
             fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",

@@ -105,10 +105,17 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 //     provides dt required to maintain the provided CFL
 //     n is number of time steps
 
+    // double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
+    //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
+    //
+
 	int i,j;
 
-	double dx[nc_col], dy[nc_row] , dt;
-	double spc , mspc , dts , mspcx, mspcy;
+	// Dynamically Allocate the array : So that large arrays are not stored in stack
+	double (*dx) = malloc(sizeof(double[nc_col])) ,
+             (*dy) = malloc(sizeof(double[nc_row]));
+	// double dx[nc_col], dy[nc_row], dt;
+	double dt , spc , mspc , dts , mspcx, mspcy;
 
 	for (i=0; i< nc_col ; i ++){
 		dx[i] = x[i+1]-x[i];
@@ -143,6 +150,11 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 		}
 
     }
+
+
+    // Free the allocated memory for dx and dy
+    free(dx);
+    free(dy);
 
     return dt;
 }
@@ -262,8 +274,8 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
     }
 
     else{
-        if(PPV<PMIN){  
-            // Select Two-Rarefaction Riemann solver   
+        if(PPV<PMIN){
+            // Select Two-Rarefaction Riemann solver
             PQ  = pow((PL/PR),G1);
             UM  = (PQ*UL/CL + UR/CR + G4*(PQ - 1.0))/(PQ/CL + 1.0/CR);
             PTL = 1.0 + G7*(UL - UM)/CL;
@@ -341,31 +353,66 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     ny = nre_col + 4 ;
 
 
+     //// double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
+    //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
+    //	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
+
+
+
     // Real cells
     // flux and accumulation initialization
-    double Flux[4][nre_row][nre_col], xflux[4][nrec_row][nre_col],yflux[4][nre_row][nrec_col];
-    double drex[nrec_col],drey[nrec_row], vol_re[nrec_row][nrec_col];
-    double rre[nrec_row][nrec_col],ure[nrec_row][nrec_col],vre[nrec_row][nrec_col],pre[nrec_row][nrec_col];
+    double (*Flux)[nre_row][nre_col] = malloc(sizeof(double[4][nre_row][nre_col])),
+         (*xflux)[nrec_row][nre_col] = malloc(sizeof(double[4][nrec_row][nre_col])),
+         (*yflux)[nre_row][nrec_col] = malloc(sizeof(double[4][nre_row][nrec_col])); // <--- allocate mem
 
+    double (*drex)= malloc(sizeof(double[nrec_col])),
+            (*drey)=malloc(sizeof(double[nrec_row])),
+            (*vol_re)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])) ; // < --- alocate mem
 
+    double (*rre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+            (*ure)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+            (*vre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+            (*pre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])); // < --- allocate mem
 
     // Initialization of values including ghost cells
+    double (*q)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col])),
+            (*x)=malloc(sizeof(double[nx])),
+             (*y)=malloc(sizeof(double[ny]));
 
-    double q[4][nc_row][nc_col], x[nx], y[ny];
+    double (*qirx)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col])),
+            (*qilx)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col])),
+            (*qiry)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col])),
+            (*qily)[nc_row][nc_col]=malloc(sizeof(double[4][nc_row][nc_col]));
 
-    double qirx[4][nc_row][nc_col],qilx[4][nc_row][nc_col],qiry[4][nc_row][nc_col],qily[4][nc_row][nc_col];
-
-    double sx[4][nc_row][nc_col],sy[4][nc_row][nc_col],c[4][nc_row][nc_col];
+    double (*sx)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col])),
+        (*sy)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col])),
+        (*c)[nc_row][nc_col] = malloc(sizeof(double[4][nc_row][nc_col]));
 
     //## with ghost cells (2 left, 2 right, 2 up, 2 down)
-    double r[nc_row][nc_col],u[nc_row][nc_col],v[nc_row][nc_col],p[nc_row][nc_col],E[nc_row][nc_col],a[nc_row][nc_col] ;
+    double (*r)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+                (*u)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+                (*v)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+                (*p)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+                (*E)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+                (*a)[nc_col] = malloc(sizeof(double[nc_row][nc_col])) ;
 
-    double cflx[nc_row][nc_col], cfly[nc_row][nc_col];
+    double (*cflx)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+            (*cfly)[nc_col] = malloc(sizeof(double[nc_row][nc_col]));
 
 
     // For evolution of interface variable, fluxes on left and right
     double xfql[4], xfqr[4],yfql[4],yfqr[4];
     double qlx[4], qrx[4],qly[4],qry[4], HOLD;
+
+    double wx, wy ;
+
+    double upx, lox, upy, loy ;
+
+    double bmx,bpx,bmy,bpy ;
+
+    double ratiox, ratioy , glx, grx , gly , gry;
+    double (*spc)[nc_col] = malloc(sizeof(double[nc_row][nc_col])) ,
+         (*mspc)[nc_col] = malloc(sizeof(double[nc_row][nc_col])) ;
 
 // s = delta for slope //
 // c = wave speed //
@@ -425,12 +472,12 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 
 
 //			# # RIGHT TRANSMISSIVE
-//			u[i][nc_col-1] = ure[i-2][nrec_col-2];
-//			u[i][nc_col-2] = ure[i-2][nrec_col-1];
+			u[i][nc_col-1] = ure[i-2][nrec_col-2];
+			u[i][nc_col-2] = ure[i-2][nrec_col-1];
 
 ////			# # RIGHT REFLECTIVE
-			u[i][nc_col-1] = - ure[i-2][nrec_col-2];
-			u[i][nc_col-2] = - ure[i-2][nrec_col-1];
+			// u[i][nc_col-1] = - ure[i-2][nrec_col-2];
+			// u[i][nc_col-2] = - ure[i-2][nrec_col-1];
 
 			v[i][nc_col-1] = vre[i-2][nrec_col-2];
 			v[i][nc_col-2] = vre[i-2][nrec_col-1];
@@ -470,12 +517,12 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 
 
 //			# # Up TRANSMISSIVE
-//			v[nc_row-1][i] = vre[nrec_row-2][i-2];
-//			v[nc_row-2][i] = vre[nrec_row-1][i-2];
+			v[nc_row-1][i] = vre[nrec_row-2][i-2];
+			v[nc_row-2][i] = vre[nrec_row-1][i-2];
 
 ////			# # UP REFLECTIVE
-			v[nc_row-1][i] = - vre[nrec_row-2][i-2];
-			v[nc_row-2][i] = - vre[nrec_row-1][i-2];
+			// v[nc_row-1][i] = - vre[nrec_row-2][i-2];
+			// v[nc_row-2][i] = - vre[nrec_row-1][i-2];
 
 			r[nc_row-1][i] = rre[nrec_row-2][i-2];
 			r[nc_row-2][i] = rre[nrec_row-1][i-2];
@@ -565,7 +612,7 @@ double dxr, dxl, dyu, dyd ;
 		}
 	}
 
-	double TOL , dxs[nc_col] , centroid_x[nc_col] ,creq_x[nc_col], dys[nc_row] , centroid_y[nc_row] , creq_y[nc_row] ;
+	double TOL , dxs[nc_col] , centroid_x[nc_col] ,creq_x[nc_col], dys[nc_row] , centroid_y[nc_row] , creq_y[nc_row] ; //# <---- allocate mem
 
 
     TOL =  1e-6 ; // 1e-8;
@@ -604,14 +651,7 @@ double dxr, dxl, dyu, dyd ;
 //    ## w = 0; CD type , w = 1; Warming-beam, w = -1; Lax-Wendroff
 //    # w = (2*c - np.sign(c))/3 ## Third order accurate in space and time
 
-    double wx, wy ;
-
-    double upx, lox, upy, loy ;
-
-    double bmx,bpx,bmy,bpy ;
-
-    double ratiox, ratioy , glx, grx , gly , gry;
-    double spc[nc_row][nc_col] , mspc[nc_row][nc_col] ;
+    
 
     wx = 0.0;
     wy = 0.0;
@@ -840,6 +880,23 @@ double dxr, dxl, dyu, dyd ;
 //    dudt = accu
 //    return dudt
 
+   // double (*Flux)[nre_row][nre_col] = malloc(sizeof(double[4][nre_row][nre_col])), (*xflux)[nrec_row][nre_col] = malloc(sizeof(double[4][nrec_row][nre_col])),(*yflux)[nre_row][nrec_col] = malloc(sizeof(double[4][nre_row][nrec_col])); // <--- allocate mem
+    // double (*rre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+//            (*ure)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+//            (*vre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
+//            (*pre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col]));
+
+
+    free(Flux); free(xflux);  free(yflux);
+    free(drex); free(drey); free(vol_re);
+    free(ure); free(vre); free(pre); free(rre);
+    free(q); free(x); free(y);
+    free(qirx); free(qilx); free(qily); free(qiry);
+    free(sx); free(sy); free(c);
+    free(r); free(u); free(v); free(p); free(E); free(a);
+    free(cflx); free(cfly);
+    free(spc); free(mspc);
+
 }
 
 
@@ -898,13 +955,22 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 
     if (DIR == 'x'){
 
-    	double qil[4][real_cell_row][real_inter_col] ;
-		double qir[4][real_cell_row][real_inter_col] ;
+    	double (*qil)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;
+		double (*qir)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;
 
 
-		double fil[4][real_cell_row][real_inter_col] ;//= {0.0};
-		double fir[4][real_cell_row][real_inter_col] ;//= {0.0};
-		double RL[real_cell_row][real_inter_col],UL[real_cell_row][real_inter_col],VL[real_cell_row][real_inter_col],PL[real_cell_row][real_inter_col],SPL[real_cell_row][real_inter_col],RR[real_cell_row][real_inter_col],UR[real_cell_row][real_inter_col],VR[real_cell_row][real_inter_col],PR[real_cell_row][real_inter_col], SPR[real_cell_row][real_inter_col];
+		double (*fil)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*fir)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*RL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*UL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*VL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*PL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*SPL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*RR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*UR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*VR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*PR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])), 
+                (*SPR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col]));
 
 
 
@@ -1033,19 +1099,33 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 
         // --------
 
+    free(qil); free(qir);
+    free(fil); free(fir);
+    free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
+    free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);
+
     }
 
 
 
     else{
 
-    	double qil[4][real_inter_row][real_cell_col] ;
-		double qir[4][real_inter_row][real_cell_col] ;
+    	double (*qil)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;
+		double (*qir)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;
 
 
-		double fil[4][real_inter_row][real_cell_col] ;//= {0.0};
-		double fir[4][real_inter_row][real_cell_col] ;//= {0.0};
-		double RL[real_inter_row][real_cell_col],UL[real_inter_row][real_cell_col],VL[real_inter_row][real_cell_col],PL[real_inter_row][real_cell_col],SPL[real_inter_row][real_cell_col],RR[real_inter_row][real_cell_col],UR[real_inter_row][real_cell_col],VR[real_inter_row][real_cell_col],PR[real_inter_row][real_cell_col], SPR[real_inter_row][real_cell_col];
+		double (*fil)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;//= {0.0};
+		double (*fir)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;//= {0.0};
+		double (*RL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*UL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*VL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*PL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*SPL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*RR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*UR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*VR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*PR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])), 
+                (*SPR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col]));
 
 
     	            // Flux calculation requires left and right values on the interface of diffrent but adjecent to the interface cells
@@ -1190,8 +1270,13 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
                 }
 
     	        // ------------
-
-    	    }
+                free(qil); free(qir);
+                free(fil); free(fir);
+                free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
+                free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);
+                        
+            
+            }
 
 
 
@@ -1208,6 +1293,9 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 //
 //    }
 
+
+   
+    
 
 }
 
@@ -1244,8 +1332,11 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 //    # Flux = numpy.zeros([n_row,n_col])
 
     int i, j ,k ;
-    double xflux[nc_row][n_col] , yflux[n_row][nc_col] ;
-    double drex[nc_col], drey[nc_row] , centroid_x[nc_col] , centroid_y[nc_row] , vol;
+    //double xflux[nc_row][n_col] , yflux[n_row][nc_col] ;
+    double (*drex)=malloc(sizeof(double[nc_col])), (*drey)=malloc(sizeof(double[nc_row])) ,
+     (*centroid_x)=malloc(sizeof(double[nc_col])) , (*centroid_y)=malloc(sizeof(double[nc_row])) , vol;
+	 
+	 double che , midx , midy , fac_tear;
 //    source_accu = numpy.zeros([nc_row,nc_col])
 
 
@@ -1256,8 +1347,6 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
             drex[i] = (x[i+1] - x[i]);
             centroid_x[i] = 0.5 * (x[i+1] + x[i]);
 //# CFL number for each cell needed for sign calculation
-
-
 
     }
 
@@ -1274,6 +1363,13 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
             source_accu[i][j] = 0.0 ;
         }
     }
+
+
+
+/// Tear Drop Shape Energy Addition and Evolution in Time Study Case
+
+
+
 
 
    // ## MESH Definition Matrix For X's and Y's
@@ -1322,9 +1418,21 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 //    ## instant source
 //    ## first point/cell only has a source constribution
 //    ## supplied value is dudt, after this integrate in time only
+
+	fac_tear = 20000.0; // bigger means bigger width
+	midx = centroid_x[(int)(nc_col/2)];
+	midy = centroid_y[(int)(nc_row/2)];
+
+
+    
+
     if (t==0.0){
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
+/// AT CENTER --------------------------------------------------
         // At Center
         vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)];
         printf("\nVOL = %lf\n", vol);
@@ -1334,9 +1442,9 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
         /// LASER ENRGY DEPOSITION
         /* 1.0E-12 J/s ; For 0.01 nanoseconds energy deposited = 10 J ; */
-        source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 50* 1.0e-3 /(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
+        // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 50* 1.0e-3 /(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
 
-        printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+        // printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
 
 
 
@@ -1347,9 +1455,42 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 //
 //        # source_accu[0,0] = 0.25*0.311357/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
 
+/// AT CENTER END -----------------------------------------------------------
+
+/// TEAR DROP WITH MIDDLE CIRCULAR SHAPE -------------------------------------
+
+// Tear Shape
+            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
+            vol = drex[j] * drey[i];
+            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
 
 
+
+            fac_tear = 20000.0;
+            //more intense one as well one also tear shaped
+            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
+            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+//
+//
+//            fac_tear = 100000.0;
+//            //more intense one as well, also tear shaped
+//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
+//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
+
+
+             /////// Circle at the middle lobe of tear
+            che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
+            if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+
+
+                    }
+                }
             }
+
+         printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+        free(drex); free(drey); free(centroid_x); free(centroid_y);
+
+
 }
 
 
@@ -1439,15 +1580,23 @@ void LFflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
     if (DIR == 'x'){
 
-    	double qil[4][real_cell_row][real_inter_col] ;
-		double qir[4][real_cell_row][real_inter_col] ;
+        double (*qil)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*qir)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
 
+		double (*fil)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*fir)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*RL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*UL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*VL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*PL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*SPL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*RR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*UR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*VR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*PR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])), 
+                (*SPR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col]));
 
-		double fil[4][real_cell_row][real_inter_col] ;//= {0.0};
-		double fir[4][real_cell_row][real_inter_col] ;//= {0.0};
-		double RL[real_cell_row][real_inter_col],UL[real_cell_row][real_inter_col],VL[real_cell_row][real_inter_col],PL[real_cell_row][real_inter_col],SPL[real_cell_row][real_inter_col],RR[real_cell_row][real_inter_col],UR[real_cell_row][real_inter_col],VR[real_cell_row][real_inter_col],PR[real_cell_row][real_inter_col], SPR[real_cell_row][real_inter_col];
-
-        double smax[real_cell_row][real_inter_col] ;
+        double (*smax)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])) ;
 
        //  Flux calculation requires left and right values on the interface of diffrent but adjecent to the interface cells
         for (i=2; i< 2 + real_cell_row; i++){ //## change this to make consistent with y as well
@@ -1514,22 +1663,37 @@ void LFflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
                       }
         }
+    
+    free(qil); free(qir);
+    free(fil); free(fir);
+    free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
+    free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);
+    free(smax);
+    
     }
 
 
     else{
 
-    	double qil[4][real_inter_row][real_cell_col] ;
-		double qir[4][real_inter_row][real_cell_col] ;
+    	double (*qil)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;
+		double (*qir)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;
 
 
-		double fil[4][real_inter_row][real_cell_col] ;//= {0.0};
-		double fir[4][real_inter_row][real_cell_col] ;//= {0.0};
-		double RL[real_inter_row][real_cell_col],UL[real_inter_row][real_cell_col],VL[real_inter_row][real_cell_col],PL[real_inter_row][real_cell_col],SPL[real_inter_row][real_cell_col],RR[real_inter_row][real_cell_col],UR[real_inter_row][real_cell_col],VR[real_inter_row][real_cell_col],PR[real_inter_row][real_cell_col], SPR[real_inter_row][real_cell_col];
+		double (*fil)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;//= {0.0};
+		double (*fir)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;//= {0.0};
+		double (*RL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*UL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*VL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*PL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*SPL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*RR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*UR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*VR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*PR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])), 
+                (*SPR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col]));
 
 
-
-		double smax[real_inter_row][real_cell_col] ;
+		double (*smax)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])) ;
 
     	            // Flux calculation requires left and right values on the interface of diffrent but adjecent to the interface cells
 
@@ -1613,9 +1777,17 @@ void LFflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
     	    }
 
 
-
+free(qil); free(qir);
+    free(fil); free(fir);
+    free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
+    free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);
+    free(smax);
 
 }
+
+    
+
+
 }
 
 
@@ -1674,15 +1846,23 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
     if (DIR == 'x'){
 
-    	double qil[4][real_cell_row][real_inter_col] ;
-		double qir[4][real_cell_row][real_inter_col] ;
+        double (*qil)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*qir)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
 
+    	double (*fil)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*fir)[real_cell_row][real_inter_col] = malloc(sizeof(double[4][real_cell_row][real_inter_col])) ;//= {0.0};
+		double (*RL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*UL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*VL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*PL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*SPL)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*RR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*UR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*VR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])),
+                (*PR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])), 
+                (*SPR)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col]));
 
-		double fil[4][real_cell_row][real_inter_col] ;//= {0.0};
-		double fir[4][real_cell_row][real_inter_col] ;//= {0.0};
-		double RL[real_cell_row][real_inter_col],UL[real_cell_row][real_inter_col],VL[real_cell_row][real_inter_col],PL[real_cell_row][real_inter_col],SPL[real_cell_row][real_inter_col],RR[real_cell_row][real_inter_col],UR[real_cell_row][real_inter_col],VR[real_cell_row][real_inter_col],PR[real_cell_row][real_inter_col], SPR[real_cell_row][real_inter_col];
-
-        double smax[real_cell_row][real_inter_col] ;
+        double (*smax)[real_inter_col] = malloc(sizeof(double[real_cell_row][real_inter_col])) ;
 
        //  Flux calculation requires left and right values on the interface of diffrent but adjecent to the interface cells
         for (i=2; i< 2 + real_cell_row; i++){ //## change this to make consistent with y as well
@@ -1779,22 +1959,37 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
                       }
         }
+    free(qil); free(qir);
+    free(fil); free(fir);
+    free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
+    free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);
+    free(smax);  
+    
+    
     }
 
 
     else{
 
-    	double qil[4][real_inter_row][real_cell_col] ;
-		double qir[4][real_inter_row][real_cell_col] ;
+    	double (*qil)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;
+		double (*qir)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;
 
 
-		double fil[4][real_inter_row][real_cell_col] ;//= {0.0};
-		double fir[4][real_inter_row][real_cell_col] ;//= {0.0};
-		double RL[real_inter_row][real_cell_col],UL[real_inter_row][real_cell_col],VL[real_inter_row][real_cell_col],PL[real_inter_row][real_cell_col],SPL[real_inter_row][real_cell_col],RR[real_inter_row][real_cell_col],UR[real_inter_row][real_cell_col],VR[real_inter_row][real_cell_col],PR[real_inter_row][real_cell_col], SPR[real_inter_row][real_cell_col];
+		double (*fil)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;//= {0.0};
+		double (*fir)[real_inter_row][real_cell_col]= malloc(sizeof(double[4][real_inter_row][real_cell_col])) ;//= {0.0};
+		double (*RL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*UL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*VL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*PL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*SPL)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*RR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*UR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*VR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])),
+                (*PR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])), 
+                (*SPR)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col]));
 
 
-
-		double smax[real_inter_row][real_cell_col] ;
+		double (*smax)[real_cell_col]= malloc(sizeof(double[real_inter_row][real_cell_col])) ;
 
     	            // Flux calculation requires left and right values on the interface of diffrent but adjecent to the interface cells
 
@@ -1889,9 +2084,17 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
     	    }
 
-
+    free(qil); free(qir);
+    free(fil); free(fir);
+    free(RL); free(UL); free(VL) ; free(PL) ; free(SPL);
+    free(RR); free(UR); free(VR) ; free(PR) ; free(SPR);
+    free(smax);
 
 
 }
+
+    
+
+
 }
 
