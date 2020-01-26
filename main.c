@@ -14,7 +14,7 @@
 #include <math.h>
 
 // Code Headers
-#include "solver.h"
+#include "2Dsolver.h"
 
 
 // UNIVERSAL CONSTANTS
@@ -103,7 +103,7 @@ int main(){
              // add new flux accumulation definition and pass later
 
 
-	double exp_ratio = 1.4
+	double exp_ratio = 1.4;
     // DEFINE the MESH
     dx = l/(nx-1);    dy = l/(ny-1);
     for(i=0; i<nx; i++){x[i] = i*dx;}
