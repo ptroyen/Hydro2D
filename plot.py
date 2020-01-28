@@ -37,7 +37,7 @@ else:
 #     P = np.loadtxt("4200.txt")[:, 5]
 #     E = np.loadtxt("4200.txt")[:, 6]
 
-    i = 'testout2' #4 * 700
+    i = 'testout' #4 * 700
     fname = str(i)+'.txt'
 
 
@@ -64,8 +64,8 @@ else:
 ## COL 4
 ## ROW 3
 
-nc_row = 300
-nc_col = 300
+nc_row = 150
+nc_col = 150
 
 ncx = nc_col
 ncy = nc_row
@@ -108,7 +108,7 @@ for i in range(nc_row):
         
 
 pyplot.figure(5)
-pyplot.contourf(cx,cy,r,60,cmap = 'RdGy')
+pyplot.contourf(cx,cy,r,160,cmap = 'RdGy')
 pyplot.colorbar()
 # pyplot.legend()
 pyplot.title("density")

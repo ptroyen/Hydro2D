@@ -144,9 +144,9 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	    }
 
         // Time Steps for first Initial Times
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-6 || n <= 5){
+        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1e-3 * 1.0e-6;
+			dt = 1e-3 * 1.0e-5;
 		}
 
     }
@@ -553,6 +553,47 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
 	}
 
 
+// // Fill the ghost cells that are at the corners as well
+// // LEFT BOTTOM
+u[0][0] = u[0][3];  u[0][1] = u[0][2];
+u[1][0] = u[1][3];  u[1][1] = u[1][2];
+v[0][0] = v[0][3];  v[0][1] = v[0][2];
+v[1][0] = v[1][3];  v[1][1] = v[1][2];
+r[0][0] = r[0][3];  r[0][1] = r[0][2];
+r[1][0] = r[1][3];  r[1][1] = r[1][2];
+p[0][0] = p[0][3];  p[0][1] = p[0][2];
+p[1][0] = p[1][3];  p[1][1] = p[1][2];
+
+// // LEFT TOP
+u[nc_col-1][0] = u[nc_col-1][3];        u[nc_col-1][1] = u[nc_col-1][2];
+u[nc_col-2][0] = u[nc_col-2][3];    u[nc_col-2][1] = u[nc_col-2][2];
+v[nc_col-1][0] = v[nc_col-1][3];        v[nc_col-1][1] = v[nc_col-1][2];
+v[nc_col-2][0] = v[nc_col-2][3];    v[nc_col-2][1] = v[nc_col-2][2];
+r[nc_col-1][0] = r[nc_col-1][3];        r[nc_col-1][1] = r[nc_col-1][2];
+r[nc_col-2][0] = r[nc_col-2][3];    r[nc_col-2][1] = r[nc_col-2][2];
+p[nc_col-1][0] = p[nc_col-1][3];        p[nc_col-1][1] = p[nc_col-1][2];
+p[nc_col-2][0] = p[nc_col-2][3];    p[nc_col-2][1] = p[nc_col-2][2];
+
+// RIGHT BOTTOM
+u[0][nc_col-1] = u[0][nc_col-4];  u[0][nc_col-2] = u[0][nc_col-3];
+u[1][nc_col-1] = u[1][nc_col-4];  u[1][nc_col-2] = u[1][nc_col-3];
+v[0][nc_col-1] = v[0][nc_col-4];  v[0][nc_col-2] = v[0][nc_col-3];
+v[1][nc_col-1] = v[1][nc_col-4];  v[1][nc_col-2] = v[1][nc_col-3];
+r[0][nc_col-1] = r[0][nc_col-4];  r[0][nc_col-2] = r[0][nc_col-3];
+r[1][nc_col-1] = r[1][nc_col-4];  r[1][nc_col-2] = r[1][nc_col-3];
+p[0][nc_col-1] = p[0][nc_col-4];  p[0][nc_col-2] = p[0][nc_col-3];
+p[1][nc_col-1] = p[1][nc_col-4];  p[1][nc_col-2] = p[1][nc_col-3];
+
+
+// RIGHT TOP
+u[nc_col-1][nc_col-1] = u[nc_col-1][nc_col-4];  u[nc_col-1][nc_col-2] = u[nc_col-1][nc_col-3];
+u[nc_col-2][nc_col-1] = u[nc_col-2][nc_col-4];  u[nc_col-2][nc_col-2] = u[nc_col-2][nc_col-3];
+v[nc_col-1][nc_col-1] = v[nc_col-1][nc_col-4];  v[nc_col-1][nc_col-2] = v[nc_col-1][nc_col-3];
+v[nc_col-2][nc_col-1] = v[nc_col-2][nc_col-4];  v[nc_col-2][nc_col-2] = v[nc_col-2][nc_col-3];
+r[nc_col-1][nc_col-1] = r[nc_col-1][nc_col-4];  r[nc_col-1][nc_col-2] = r[nc_col-1][nc_col-3];
+r[nc_col-2][nc_col-1] = r[nc_col-2][nc_col-4];  r[nc_col-2][nc_col-2] = p[nc_col-2][nc_col-3];
+p[nc_col-1][nc_col-1] = p[nc_col-1][nc_col-4];  p[nc_col-1][nc_col-2] = p[nc_col-1][nc_col-3];
+p[nc_col-2][nc_col-1] = p[nc_col-2][nc_col-4];  p[nc_col-2][nc_col-2] = p[nc_col-2][nc_col-3];
 
 //#   ghor = [ure[:][-2],ure[:][-1]] ## reflective
 //#     ghol = [ure[:][1],ure[:][0]] ## transmissive
@@ -810,13 +851,13 @@ double dxr, dxl, dyu, dyd ;
             for ( k = 0; k < 4 ; k++){
             	// ## caclulate evolution of ulx and ury in dt/2
             	 HOLD = 0.5 * (dt/(x[j+1]-x[j])) * (xfql[k] - xfqr[k]) + 0.5 * (dt/(y[i+1]-y[i])) * (yfql[k] - yfqr[k]) ;
-           // HOLD = 0.5 * (dt/(x[j+1]-x[j])) * (xfql[k] - xfqr[k])  ;
+         //   HOLD = 0.5 * (dt/(x[j+1]-x[j])) * (xfql[k] - xfqr[k])  ;
 
             	qilx[k][i][j] = qlx[k] + HOLD ;
 				qirx[k][i][j] = qrx[k] + HOLD ;
 
 
-	//		HOLD	= 0.5 * (dt/(y[i+1]-y[i])) * (yfql[k] - yfqr[k]);
+	    //	HOLD	= 0.5 * (dt/(y[i+1]-y[i])) * (yfql[k] - yfqr[k]);
 
 //				## calculate evolution of uly and ury in dt/2
 				qily[k][i][j] = qly[k] + HOLD ;
@@ -2091,10 +2132,90 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
     free(smax);
 
 
+    }
+
 }
 
+void Geom_F(int nc_row, int nc_col,double q[4][nc_row][nc_col],double gamma,int NDIM, double x[], double y[], double source_geom[4][nc_row][nc_col]){
+ /*   '''
+---------------------------------------------------------------------------------------
+ >>>>>>>>>>>           ### d/dt()dv = - N * ( G(U) / x ) dv ###          <<<<<<<<<<<<<<<
+## Provide the source term contribution due to geometry change but provides only [N * ( G(U) / x )] this part; check sign while integration
+N = 0 : Cartesian
+N = 1 : Cylindrical
+N = 2 : Spherical
+`````````````````````````````````````````
+Setup in such a way that; x -> r when N = 1 and y -> z
+ -----------------------------------------------------------------------------------------
+ '''  */
+
+    int n_col, n_row, nx , ny ;
+
+    n_col = nc_col + 1 ;
+    n_row = nc_row + 1 ;
+
+    nx = n_col;
+    ny = n_row;
     
+    int i, j ,k ;
+
+    //double xflux[nc_row][n_col] , yflux[n_row][nc_col] ;
+    double (*drex)=malloc(sizeof(double[nc_col])), (*drey)=malloc(sizeof(double[nc_row])) ,
+     (*centroid_x)=malloc(sizeof(double[nc_col])) , (*centroid_y)=malloc(sizeof(double[nc_row])) , vol ,(*int_x)=malloc(sizeof(double[nc_col]));
+
+    double (*r)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+            (*u)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+            (*v)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+            (*p)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+            (*E)[nc_col] = malloc(sizeof(double[nc_row][nc_col])),
+            (*s)[nc_col] = malloc(sizeof(double[nc_row][nc_col])) ;
+	 
+	// double midx , midy ;
+
+     //## Centroids
+         for (i=0 ; i< nc_col ; i++){
+            drex[i] = (x[i+1] - x[i]);
+            centroid_x[i] = 0.5 * (x[i+1] + x[i]);
+    }
+
+    for(i=0 ; i < nc_row ; i++){
+    	drey[i] = (y[i+1] - y[i]);
+    	centroid_y[i] = 0.5*(y[i+1] + y[i]);
+
+    }
+
+    for ( i = 0 ; i < nc_row ; i++){
+        for( j = 0 ; j< nc_col ; j++){
+            for( k = 0 ; k< 4 ; k++){
+            source_geom[k][i][j] = 0.0 ;
+            }
+        }
+    }
+
+	// midx = centroid_x[(int)(nc_col/2)];
+	// midy = centroid_y[(int)(nc_row/2)];
+
+    // void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma,
+    //                  double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double s[][nc_col]){
+ 
+if(NDIM != 0){
+    prmcalculate(nc_row,nc_col,q,gamma,r,u,v,p,s);
+
+    for ( i = 0 ; i < nc_row ; i++){
+        for( j = 0 ; j< nc_col ; j++){
+            int_x[j] = log(x[j+1]) - log(x[j]) ;
+            int_x[0] = log(centroid_x[0]);
+            source_geom[0][i][j] = (r[i][j] * u[i][j])*(NDIM*int_x[j]);
+            source_geom[1][i][j] = (r[i][j] * u[i][j] * u[i][j] )*(NDIM*int_x[j]);
+            source_geom[2][i][j] = (r[i][j] * u[i][j] * v[i][j]) *(NDIM*int_x[j]);
+            source_geom[3][i][j] = (u[i][j] * (q[3][i][j] + p[i][j]))*(NDIM*int_x[j]);
+ 
+        }
+    }
+}
+
+        free(drex); free(drey); free(centroid_x); free(centroid_y),free(int_x);
+        free(r); free(u); free(v); free(p); free(E); free(s);
 
 
 }
-

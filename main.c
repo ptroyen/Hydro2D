@@ -32,8 +32,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 300
-#define ncy 300
+#define ncx 150
+#define ncy 150
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -48,7 +48,9 @@ int main(){
     // BASIC INITIALIZATION
     // const int ncx = 400 , ncy = 400 ;
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
-    double  l=20 * mili ,lx = l,ly = l,CFL = 0.35;
+    // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
+    int NDIM = 0 ;
+    double  l=20 * mili ,lx = l,ly = l,CFL = 0.25;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -75,7 +77,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 500.0 * micro ;
+    tend = 20.0 * micro ;
     //CFL NO.
     //CFL = 0.1;
 
@@ -99,7 +101,7 @@ int main(){
     static double  p[nc_row][nc_col] , u[nc_row][nc_col] , v[nc_row][nc_col] , r[nc_row][nc_col] ;
     static double  speed[nc_row][nc_col],tempr[nc_row][nc_col], E[nc_row][nc_col], a[nc_row][nc_col] ;
     static double  q[4][nc_row][nc_col],qfinal[4][nc_row][nc_col],
-            dudt[4][nc_row][nc_col],accu_a[4][nc_row][nc_col], source_accu[nc_row][nc_col];
+            dudt[4][nc_row][nc_col],accu_a[4][nc_row][nc_col], source_accu[nc_row][nc_col], source_geom[4][nc_row][nc_col];
              // add new flux accumulation definition and pass later
 
 
@@ -245,12 +247,16 @@ int main(){
     // store on source_accu : only for energy equation , see source_accu initialization
         Source(nc_row, nc_col, q, x, y, time,dt, c_v, source_accu );
 
+       // void Geom_F(int nc_row, int nc_col,double q[4][nc_row][nc_col],double gamma,int NDIM, double x[], double y[], double source_geom[4][nc_row][nc_col]){
+ 
+        Geom_F(nc_row, nc_col,q,GAMMA,NDIM,x,y,source_geom);
+
 
     // Now Integrate the equation
         for (i=0; i < nc_row ; i++){
             for (j=0; j < nc_col ; j++){
                 for (k=0; k < 4 ; k++){
-                    dudt[k][i][j] =  - accu_a[k][i][j] ;
+                    dudt[k][i][j] =  - accu_a[k][i][j] - source_geom[k][i][j];
                         if (k == 3){
                             dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add diffusive flux
                         }
