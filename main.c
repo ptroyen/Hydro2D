@@ -15,6 +15,7 @@
 
 // Code Headers
 #include "2Dsolver.h"
+#include "gridgen.h"
 
 
 // UNIVERSAL CONSTANTS
@@ -32,8 +33,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 150
-#define ncy 150
+#define ncx 200
+#define ncy 200
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -77,7 +78,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 20.0 * micro ;
+    tend = 30.0 * micro ;
     //CFL NO.
     //CFL = 0.1;
 
@@ -106,13 +107,28 @@ int main(){
 
 
 	double exp_ratio = 1.4;
+
+
     // DEFINE the MESH
-    dx = l/(nx-1);    dy = l/(ny-1);
-    for(i=0; i<nx; i++){x[i] = i*dx;}
-    for(i=0; i<ny; i++){y[i] = i*dy;}
+    //-------------------------------------------------------
+    // dx = l/(nx-1);    dy = l/(ny-1);
+    // for(i=0; i<nx; i++){x[i] = i*dx;}
+    // for(i=0; i<ny; i++){y[i] = i*dy;}
+
+
+    // USING GRIDGENERATOR ------------
+
+   // void grid(int IMAX , int JMAX ,double XL, double XR, double YL, double YU, double x[], double y[]);
+
+   grid(nx,ny,0.0,lx,0.0,ly,x,y);
     //  Centroids
     for(i=0; i<ncx; i++){cx[i] = 0.5*(x[i] + x[i+1]);}
     for(i=0; i<ncy; i++){cy[i] = 0.5*(y[i] + y[i+1]);}
+
+
+    //---------------------------------------------------------
+
+
 
         printf("MESH DEFINED\n");
 

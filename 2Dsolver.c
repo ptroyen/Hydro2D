@@ -1475,7 +1475,7 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
 /// AT CENTER --------------------------------------------------
         // At Center
-        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)];
+        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
         printf("\nVOL = %lf\n", vol);
         // source_accu[int(nc_row/2),int(nc_col/2)] = 1.0*0.244816/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
        // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 1.0*0.311357/(dt*vol) ; // 0.851072 / dt ## 0.244816/dt

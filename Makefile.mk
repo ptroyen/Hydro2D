@@ -5,8 +5,8 @@ LINK = -lm #Stack Size set
 
 EXT = 
 
-DEPS = 2Dsolver.h
-OBJ = 2Dsolver.o main.o
+DEPS = 2Dsolver.h gridgen.h
+OBJ = 2Dsolver.o gridgen.o main.o
 
 #main: $(OBJ)
 #	$(CC) $(CFLAGS) -o main 2Dsolver.o main.o

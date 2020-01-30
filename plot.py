@@ -64,8 +64,8 @@ else:
 ## COL 4
 ## ROW 3
 
-nc_row = 150
-nc_col = 150
+nc_row = 200
+nc_col = 200
 
 ncx = nc_col
 ncy = nc_row
@@ -106,6 +106,17 @@ for i in range(nc_row):
     
     ## PLOTS HERE
         
+
+mx,my = np.meshgrid(cx,cy)     
+
+## plot mesh
+pyplot.figure(211)
+
+pyplot.plot(cx,mx,'k')
+pyplot.plot(my.T,cy,'k')
+## pyplot.plot(cy)
+pyplot.legend()
+pyplot.show()
 
 pyplot.figure(5)
 pyplot.contourf(cx,cy,r,160,cmap = 'RdGy')
@@ -240,3 +251,5 @@ pyplot.show()
 # pyplot.plot(cy,e[:,int(ncy/2)],label='energy along x = 0.9')
 # pyplot.legend()
 # pyplot.show()
+
+
