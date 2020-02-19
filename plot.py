@@ -37,7 +37,7 @@ else:
 #     P = np.loadtxt("4200.txt")[:, 5]
 #     E = np.loadtxt("4200.txt")[:, 6]
 
-    i = 'testout' #4 * 700
+    i = 'testout2' #4 * 700
     fname = str(i)+'.txt'
 
 

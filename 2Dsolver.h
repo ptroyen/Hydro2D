@@ -31,7 +31,10 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 
 void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]);
 
+double gauss_2d(double A,double x0, double y0,double sigmax, double sigmay, double x, double y);
+
 void Geom_F(int nc_row, int nc_col,double q[4][nc_row][nc_col],double gamma,int NDIM, double x[], double y[], double source_geom[4][nc_row][nc_col]);
  
+struct par_gauss;
 
 #endif /* 2DSOLVER_H_ */

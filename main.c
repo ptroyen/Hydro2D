@@ -51,7 +51,7 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=20 * mili ,lx = l,ly = l,CFL = 0.25;
+    double  l=150 * mili ,lx = l,ly = l,CFL = 0.1;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -78,7 +78,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 30.0 * micro ;
+    tend = 0.1 * nano ;
     //CFL NO.
     //CFL = 0.1;
 

@@ -13,6 +13,8 @@
 #include <math.h>
 #include "2Dsolver.h"
 
+#define PI 3.14159265358979323846
+
 void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v, double t[][nc_col]){
 /*
     Returns t as the solution for temperature
@@ -144,9 +146,9 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	    }
 
         // Time Steps for first Initial Times
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
+        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-8 || n <= 5){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1e-3 * 1.0e-5;
+			dt = 1e-3 * 1.0e-7;
 		}
 
     }
@@ -1341,6 +1343,23 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 }
 
 
+
+// Make a Structure to store Parameters for a Gaussian Profile
+// Store Amplitude, x-center, y-center, sigmax, and sigmay
+
+struct par_gauss
+{
+    double A, x0, y0, sigma_x , sigma_y ;
+
+};
+
+struct par_expo
+{
+
+
+};
+
+
 // SOURCE FLUX
 //void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
 
@@ -1378,7 +1397,27 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
      (*centroid_x)=malloc(sizeof(double[nc_col])) , (*centroid_y)=malloc(sizeof(double[nc_row])) , vol;
 	 
 	 double che , midx , midy , fac_tear;
+
+
+    // LASER PROPERTIES DEFINITIONS
+    double w0, lam , Rl_rn, f ;
+
+
+    // The Dual Pulse Laser :: SECOND PULSE
+    w0 = 200.0e-6 ; lam = 1064.0e-9 ; f = 300.0e-3 ;
+    Rl_rn = 0.1* PI*(w0*w0) / lam ;
+
+
+
+
+
+
+    // Use structure to define the gauss function paratmeters
+    struct par_gauss gaus1 , gaus2 , gaus3 , gaus4 ;
+    // double A , sigmax , sigmay ; 
 //    source_accu = numpy.zeros([nc_row,nc_col])
+
+
 
 
 
@@ -1465,18 +1504,19 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 	midy = centroid_y[(int)(nc_row/2)];
 
 
+// At Center
+        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
+        printf("\nVOL = %lf\n", vol);
     
 
-    if (t==0.0){
+    if (t<1*5.0e-9){
 
         for ( i = 0 ; i < nc_row ; i++){
             for( j = 0 ; j< nc_col ; j++){
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
-/// AT CENTER --------------------------------------------------
-        // At Center
-        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
-        printf("\nVOL = %lf\n", vol);
+        // AT CENTER --------------------------------------------------
+        
         // source_accu[int(nc_row/2),int(nc_col/2)] = 1.0*0.244816/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
        // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 1.0*0.311357/(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
 
@@ -1500,33 +1540,244 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
 /// TEAR DROP WITH MIDDLE CIRCULAR SHAPE -------------------------------------
 
-// Tear Shape
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
-            vol = drex[j] * drey[i];
-            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
+// // Tear Shape
+//             che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
+//             vol = drex[j] * drey[i];
+//             if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
 
 
 
-            fac_tear = 20000.0;
-            //more intense one as well one also tear shaped
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
-//
-//
-//            fac_tear = 100000.0;
-//            //more intense one as well, also tear shaped
-//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
-//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
+//             fac_tear = 20000.0;
+//             //more intense one as well one also tear shaped
+//             che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
+//             if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+// //
+// //
+// //            fac_tear = 100000.0;
+// //            //more intense one as well, also tear shaped
+// //            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
+// //            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
 
 
-             /////// Circle at the middle lobe of tear
-            che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+//              /////// Circle at the middle lobe of tear
+//             che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
+//             if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+// TEAR SHAPE ENDS ---------------------------------------------------------------------------------------------
 
 
-                    }
-                }
-            }
+
+
+
+        // LASER INTENSITY USED HERE WITH GAUSSIAN DISTRIBUTION:: DATA OF SECOND PULSE
+        // Source accu = Intensity ( watt per unit area :: checks out)
+        // FITTED TO A FUNCTION in 2D ------------------------------------------------
+        // Define the profile with these parameters
+        //NOTE: xmid and ymid are not changed
+        // At t = 0
+         //  3.01549875e+11 -2.07422001e-01 -2.21465552e-06  9.38443224e-01  -4.69878748e-01
+         //  Amp                x0                  y0             sigma_x          sigma_y
+
+        // gaus1.A = 3.01549875e+11 ;
+        // gaus1.x0 = -2.07422001e-01 ; 
+        // gaus1.y0 = -2.21465552e-06 ;
+        // gaus1.sigma_x = 9.38443224e-01 ;
+        // gaus1.sigma_y = -4.69878748e-01 ;
+
+
+        /*
+        Fitted parameters: For Last TIME SNAP: t = 10ns :: 4 gaussian :: x0 , y0, sigmax, sigmay, amplitude
+        [-5.09449565e-01  4.36821396e-01  7.09271093e-01  3.59628433e-01   1.99005213e+13 
+        -5.09447698e-01 -4.36819324e-01  7.09275248e-01   3.59631310e-01  1.99005492e+13  
+        1.24063233e+00  2.39198134e-05   8.80728819e-01  1.19575633e+00  6.58660872e+12 
+        -2.05679456e+00   7.13013373e-06  6.59353934e-01  1.24931801e+00  6.10483100e+12]
+        */
+
+
+ // For only intensity
+    //    gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+    //    gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+    //    gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+    //    gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+         //// For I_Pulse2_0*Rho_e_0
+        gaus1.x0 = -2.470534e-01 ; gaus1.y0 = 2.465843e-07 ;  gaus1.sigma_x = 5.314265e-01 ; gaus1.sigma_y = 3.952746e-01 ;  gaus1.A = 3.215602e+25 ; 
+        gaus2.x0 = 7.488499e-01 ; gaus2.y0 = 1.407520e-06 ;  gaus2.sigma_x = 4.782765e-01 ; gaus2.sigma_y = 7.270592e-01 ;  gaus2.A = 8.904928e+24 ; 
+        gaus3.x0 = -1.557827e+00 ; gaus3.y0 = 1.342642e-05 ;  gaus3.sigma_x = 6.963636e-01 ; gaus3.sigma_y = 9.185818e-01 ;  gaus3.A = 7.962736e+24 ; 
+        gaus4.x0 = 1.913055e+00 ; gaus4.y0 = -1.765879e-05 ;  gaus4.sigma_x = -6.388076e-01 ; gaus4.sigma_y = -1.268513e+00 ;  gaus4.A = 4.262157e+24 ;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<2.0*5.0e-9){
+    // Different profiles in Time
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+       gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+       gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+       gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+       gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<3.0*5.0e-9){
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+       gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+       gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+       gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+       gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<4.0*5.0e-9){
+
+// Different profiles in Time
+
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+       gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+       gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+       gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+       gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<5.0*5.0e-9){
+
+// Different profiles in Time
+
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+       gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+       gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+       gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+       gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<6.0*5.0e-9){
+
+// Different profiles in Time
+
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+       gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+       gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+       gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+       gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<7.0*5.0e-9){
+
+// Different profiles in Time
+
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+       gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+       gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+       gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+       gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}else if (t<8.0*5.0e-9){
+
+
+
+        for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+        // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
+
+    //    gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
+    //    gaus2.A = 1.99007062e+13 ; gaus2.x0 = -5.09467920e-01 ; gaus2.y0 =-4.36822323e-01; gaus2.sigma_x = 7.09275248e-01 ; gaus2.sigma_y =  3.59631310e-01 ;
+    //    gaus3.A =6.58660628e+12 ; gaus3.x0 = 1.24061914e+00; gaus3.y0 = 2.39198134e-05 ; gaus3.sigma_x = 8.80728819e-01; gaus3.sigma_y = 1.19575633e+00 ;
+    //    gaus4.A =6.10485144e+12 ; gaus4.x0 = -2.05679838e+00; gaus4.y0 =7.13013373e-06 ; gaus4.sigma_x = 6.59353934e-01; gaus4.sigma_y = 1.24931801e+00;
+
+
+
+        // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus2.A, gaus2.x0 , gaus2.y0, gaus2.sigma_x, gaus2.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+        source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
+
+        }
+    }
+}
+
+
+
+
+
+
 
          printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
         free(drex); free(drey); free(centroid_x); free(centroid_y);
@@ -1535,6 +1786,15 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 }
 
 
+// Function Defining the Energy addition Profile :: GAUSSIAN HERE
+double gauss_2d(double A,double x0, double y0,double sigmax, double sigmay, double x, double y){
+    // Remember the order of the parameters that are fitted
+    double res ;
+
+    //## Exactly Gaussian 2D
+    res = A * exp(- (x - x0)*(x - x0)/(2*sigmax*sigmax) - (y - y0)*(y - y0)/(2*sigmay*sigmay) );
+    return res;
+}
 
 // Lax- Fedrich
 
