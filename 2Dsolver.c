@@ -1359,6 +1359,15 @@ struct par_expo
 
 };
 
+// Structure COntaining PLasma Parameters
+struct plasma
+{
+    // wavelength
+    // beam waist = w0
+    double lambda, WFHM , f , w0 ;
+
+};
+
 
 // SOURCE FLUX
 //void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
@@ -1606,6 +1615,7 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
         gaus3.x0 = -1.557827e+00 ; gaus3.y0 = 1.342642e-05 ;  gaus3.sigma_x = 6.963636e-01 ; gaus3.sigma_y = 9.185818e-01 ;  gaus3.A = 7.962736e+24 ; 
         gaus4.x0 = 1.913055e+00 ; gaus4.y0 = -1.765879e-05 ;  gaus4.sigma_x = -6.388076e-01 ; gaus4.sigma_y = -1.268513e+00 ;  gaus4.A = 4.262157e+24 ;
 
+        // ONly a factor of the joule heating term from intensity and electron number density goes as the source of the heat
 
         // NOTE: The Gaussian Fit is defined for Z/Releygh_range ::> X and R/w0 ::> Y
         source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus1.A, gaus1.x0 , gaus1.y0, gaus1.sigma_x, gaus1.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;

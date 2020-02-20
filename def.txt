@@ -1,0 +1,21 @@
+
+ //// For I_Pulse2_15*Rho_e_15	 TIME::2020-02-20 07:20:19.843080
+ gaus1.x0 = 7.808795e+01 ; 	 gaus1.y0 = -6.751433e+00 ;  	 gaus1.sigma_x = 4.428349e+02 ; 	 gaus1.sigma_y = 2.342866e+00 ;  	 gaus1.A = -2.254528e+27 ; 
+ gaus2.x0 = 3.180902e+04 ; 	 gaus2.y0 = -5.700468e+03 ;  	 gaus2.sigma_x = -6.524200e+04 ; 	 gaus2.sigma_y = 3.891424e+02 ;  	 gaus2.A = -6.856237e+29 ; 
+ gaus3.x0 = -1.081418e+03 ; 	 gaus3.y0 = -6.465958e+02 ;  	 gaus3.sigma_x = 3.136257e+02 ; 	 gaus3.sigma_y = -1.298339e+04 ;  	 gaus3.A = 6.706360e+29 ; 
+ gaus4.x0 = -3.738879e-01 ; 	 gaus4.y0 = 4.545241e-08 ;  	 gaus4.sigma_x = 3.648174e-01 ; 	 gaus4.sigma_y = 1.432397e-01 ;  	 gaus4.A = 1.805978e+30 ; 
+ //// For I_Pulse2_15*Rho_e_15	 TIME::2020-02-20 07:22:47.871161
+ gaus1.x0 = 4.805176e+05 ; 	 gaus1.y0 = -1.953947e+02 ;  	 gaus1.sigma_x = -1.028924e+05 ; 	 gaus1.sigma_y = 1.793130e+03 ;  	 gaus1.A = 2.986499e+31 ; 
+ gaus2.x0 = -3.819762e-01 ; 	 gaus2.y0 = -1.126715e-07 ;  	 gaus2.sigma_x = -4.318175e-01 ; 	 gaus2.sigma_y = -1.713923e-01 ;  	 gaus2.A = 1.152331e+30 ; 
+ gaus3.x0 = -3.566395e-01 ; 	 gaus3.y0 = -2.017877e-09 ;  	 gaus3.sigma_x = 2.398447e-01 ; 	 gaus3.sigma_y = -8.309272e-02 ;  	 gaus3.A = 7.959127e+29 ; 
+ gaus4.x0 = -4.883579e+02 ; 	 gaus4.y0 = 4.820678e-01 ;  	 gaus4.sigma_x = 4.184967e+01 ; 	 gaus4.sigma_y = -2.261022e+00 ;  	 gaus4.A = -2.398769e+31 ; 
+ //// For I_Pulse2_15*Rho_e_15	 TIME::2020-02-20 07:23:37.945516
+ gaus1.x0 = 1.687573e+05 ; 	 gaus1.y0 = -5.344201e-02 ;  	 gaus1.sigma_x = 3.651564e+04 ; 	 gaus1.sigma_y = -2.173010e+00 ;  	 gaus1.A = 2.555828e+31 ; 
+ gaus2.x0 = -3.819313e-01 ; 	 gaus2.y0 = -1.575934e-09 ;  	 gaus2.sigma_x = 4.314179e-01 ; 	 gaus2.sigma_y = -1.712695e-01 ;  	 gaus2.A = 1.155222e+30 ; 
+ gaus3.x0 = -3.566027e-01 ; 	 gaus3.y0 = 1.357766e-06 ;  	 gaus3.sigma_x = 2.396164e-01 ; 	 gaus3.sigma_y = 8.289540e-02 ;  	 gaus3.A = 7.931191e+29 ; 
+ gaus4.x0 = -5.109825e+02 ; 	 gaus4.y0 = -5.336237e-01 ;  	 gaus4.sigma_x = -6.206727e+01 ; 	 gaus4.sigma_y = -6.653129e+00 ;  	 gaus4.A = -2.463689e+31 ; 
+ //// For I_Pulse2_15*Rho_e_15	 TIME::2020-02-20 07:24:47.303724
+ gaus1.x0 = 1.687573e+05 ; 	 gaus1.y0 = -5.344201e-02 ;  	 gaus1.sigma_x = 3.651564e+04 ; 	 gaus1.sigma_y = -2.173010e+00 ;  	 gaus1.A = 2.555828e+31 ; 
+ gaus2.x0 = -3.819313e-01 ; 	 gaus2.y0 = -1.575934e-09 ;  	 gaus2.sigma_x = 4.314179e-01 ; 	 gaus2.sigma_y = -1.712695e-01 ;  	 gaus2.A = 1.155222e+30 ; 
+ gaus3.x0 = -3.566027e-01 ; 	 gaus3.y0 = 1.357766e-06 ;  	 gaus3.sigma_x = 2.396164e-01 ; 	 gaus3.sigma_y = 8.289540e-02 ;  	 gaus3.A = 7.931191e+29 ; 
+ gaus4.x0 = -5.109825e+02 ; 	 gaus4.y0 = -5.336237e-01 ;  	 gaus4.sigma_x = -6.206727e+01 ; 	 gaus4.sigma_y = -6.653129e+00 ;  	 gaus4.A = -2.463689e+31 ; 
