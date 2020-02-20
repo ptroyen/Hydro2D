@@ -23,4 +23,4 @@ main: $(OBJ)
 
 .PHONY : clean
 clean :
-	-rm $(OBJ) main *.txt
+	-rm $(OBJ) main *.txt *.exe *.out
