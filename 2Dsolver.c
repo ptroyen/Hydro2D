@@ -13,6 +13,8 @@
 #include <math.h>
 #include "2Dsolver.h"
 
+#define PI 3.14159265358979323846
+
 void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v, double t[][nc_col]){
 /*
     Returns t as the solution for temperature
@@ -143,10 +145,15 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
             }
 	    }
 
-        // Time Steps for first Initial Times
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
+        // // Time Steps for first Initial Times
+        // if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
+        //     printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+		// 	dt = 1e-3 * 1.0e-5;
+
+             if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-8 || n <= 5){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1e-3 * 1.0e-5;
+			dt = 1.0e-2 * 1.0e-8;
+
 		}
 
     }
@@ -1345,7 +1352,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 //void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
 
 
-void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]){
+void Source(int nc_row, int nc_col,double q[][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]){
  /*   '''
 ---------------------------------------------------------------------------------------
  >>>>>>>>>>>           ### d/dt()dv = S dv ###          <<<<<<<<<<<<<<<
@@ -1378,8 +1385,52 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
      (*centroid_x)=malloc(sizeof(double[nc_col])) , (*centroid_y)=malloc(sizeof(double[nc_row])) , vol;
 	 
 	 double che , midx , midy , fac_tear;
+
+
+    // LASER PROPERTIES DEFINITIONS
+    double w0, lam , Rl_rn, f ;
+
+
+    // Other Values required ffor Joule Heating
+
+    double ele , neu_m , neu_c , e0 , m_e ,m_n, w_l , C ,Tev , C_log;
+
+    double fac_j , Nm , s_val;
+    double read1 , read2 ;
+
+
+    // Create two arrays to store read intensity profiles
+    double (*In)[nc_col]=malloc(sizeof(double[nc_row][nc_col])),
+             (*Ne)[nc_col]=malloc(sizeof(double[nc_row][nc_col]));
+           //  (*Nm)[nc_col]=malloc(sizeof(double[nc_row][nc_col])) ;
+    
+
+    FILE *fpini ;
+    int flag ;
+
+
+
+    // Use structure to define the gauss function paratmeters
+    // struct par_gauss gaus1 , gaus2 , gaus3 , gaus4 ;
+    // double A , sigmax , sigmay ; 
 //    source_accu = numpy.zeros([nc_row,nc_col])
 
+
+
+    // The Dual Pulse Laser :: SECOND PULSE
+    w0 = 200.0e-6 ; lam = 1064.0e-9 ; f = 300.0e-3 ;
+    Rl_rn = 0.1* PI*(w0*w0) / lam ;
+
+
+    // Do not change with position and time
+    C = 299792458.0 ;
+    e0 = 8.85418782e-12 ;
+    m_e = 9.10938356e-31 ; // mass of e
+    ele = 1.60217662e-19 ; // charge of e
+    w_l = (C*2*PI)/lam ;
+    C_log = 10.0 ;
+    Tev = 1.0 ;
+    m_n = 4.65e-26 ; // kg mass of a nitrogen molecule
 
 
      //## Centroids
@@ -1465,18 +1516,19 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 	midy = centroid_y[(int)(nc_row/2)];
 
 
+// At Center
+        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
+        // printf("\nVOL = %lf\n", vol);
     
+            
+flag = 1;
+    if (t<1*5.0e-9){
 
-    if (t==0.0){
-
-        for ( i = 0 ; i < nc_row ; i++){
-            for( j = 0 ; j< nc_col ; j++){
+         fpini = fopen("out_0.txt", "r");
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
-/// AT CENTER --------------------------------------------------
-        // At Center
-        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
-        printf("\nVOL = %lf\n", vol);
+        // AT CENTER --------------------------------------------------
+        
         // source_accu[int(nc_row/2),int(nc_col/2)] = 1.0*0.244816/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
        // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 1.0*0.311357/(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
 
@@ -1500,46 +1552,131 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
 /// TEAR DROP WITH MIDDLE CIRCULAR SHAPE -------------------------------------
 
-// Tear Shape
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
-            vol = drex[j] * drey[i];
-            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
+// // Tear Shape
+//             che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
+//             vol = drex[j] * drey[i];
+//             if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
 
 
 
-            fac_tear = 20000.0;
-            //more intense one as well one also tear shaped
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
-//
-//
-//            fac_tear = 100000.0;
-//            //more intense one as well, also tear shaped
-//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
-//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
+//             fac_tear = 20000.0;
+//             //more intense one as well one also tear shaped
+//             che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
+//             if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+// //
+// //
+// //            fac_tear = 100000.0;
+// //            //more intense one as well, also tear shaped
+// //            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
+// //            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
 
 
-             /////// Circle at the middle lobe of tear
-            che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+//              /////// Circle at the middle lobe of tear
+//             che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
+//             if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+// TEAR SHAPE ENDS ---------------------------------------------------------------------------------------------
+
+ 
+}else if (t<2.0*5.0e-9){
+
+        fpini = fopen("out_5.txt", "r");
+ 
+}else if (t<3.0*5.0e-9){
+    fpini = fopen("out_10.txt", "r");
+
+}else if (t<4.0*5.0e-9){
+
+    fpini = fopen("out_15.txt", "r");
+
+}else if (t<5.0*5.0e-9){
 
 
-                    }
-                }
+    fpini = fopen("out_20.txt", "r");
+
+   
+}else if (t<6.0*5.0e-9){
+
+
+        fpini = fopen("out_25.txt", "r");
+
+}else if (t<7.0*5.0e-9){
+
+
+        fpini = fopen("out_30.txt", "r");
+ 
+}else if (t<8.0*5.0e-9){
+
+    fpini = fopen("out_35.txt", "r");
+
+}else {flag = 0;}
+
+
+printf("Source ON = %d\n" , flag);
+
+
+if ( flag !=0){
+// Load interpolated data file to array :: selected by time
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+
+                fscanf(fpini,"%lf \t %lf", &read1 , &read2);
+                // printf("%lf \t %lf i = %d , j = %d \n", read1 , read2, i , j);
+
+                In[i][j] = 1.0e2*read1 ; Ne[i][j] = read2 ;
+
+                if (!(isfinite(In[i][j])) || !(isfinite(Ne[i][j]))){
+			 printf("**read not finite**");
             }
+    
+    }
+}
+fclose(fpini);
 
-         printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+
+
+
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+
+        Nm = q[0][i][j] / m_n ; // Neutrals number density
+        neu_c = 2.91e-12 * Ne[i][j] * pow(Tev,-3/2)*C_log ; // Need to fit the electron number density as well.
+        neu_m = 3.91e-14 * Nm * pow(Tev,1/2) ;
+        fac_j = 0.3 ;
+
+        // Calculate the Joule Heating Term now :: From here supply per unit time per unit volume of energy ( 2D :: VOl == AREA)
+        source_accu[i][j] = fac_j*(ele*ele * Ne[i][j] * In[i][j] * (neu_m + neu_c) )/(e0 * m_e * (w_l*w_l + (neu_m + neu_c)*(neu_m + neu_c)) ) ;
+
+        // printf("Ne = %f \t In = %f" , Ne[i][j], In[i][j]);
+        // source_accu[i][j] = 0.0e-16*fac_j*Ne[i][j]*In[i][j] ;
+        // source_accu[i][j] = 0.0;
+    if (!(isfinite(q[0][i][j]))){
+			 printf("\n %f  %f  %f  %f  %f \n", q[0][i][j] , neu_c , neu_m , In[i][j] , Ne[i][j]);
+            }
+        // printf("Source = %f \n " , source_accu[i][j]);
+
+    }
+}
+}else{
+
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+ source_accu[i][j] = 0.0;
+    
+    }
+}
+}
+
+        printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+
         free(drex); free(drey); free(centroid_x); free(centroid_y);
 
 
 }
 
-
-
 // Lax- Fedrich
-
-
-
 void LFflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,double mspc[nc_row][nc_col], int f_row , int f_col, double Flux[4][f_row][f_col]){
 
 

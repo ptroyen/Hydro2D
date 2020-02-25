@@ -29,7 +29,8 @@
 // SPECIFIC CONSTANTS
 #define GAMMA 1.4
 #define c_v 0.718*1000
-#define RHO 1.225
+// #define RHO 1.225 // Air
+#define RHO 1.2506 // Nitrogen
 
 
 // BASIC INITIALIZATION
@@ -51,7 +52,7 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=20 * mili ,lx = l,ly = l,CFL = 0.25;
+    double  l=20 * mili ,lx = 600*mili,ly = 4.0*mili,CFL = 0.25;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -78,7 +79,8 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 30.0 * micro ;
+    // tend = 30.0 * micro ; // Laser tear shape
+    tend = 30.0 * nano ; // Laser tear shape
     //CFL NO.
     //CFL = 0.1;
 
