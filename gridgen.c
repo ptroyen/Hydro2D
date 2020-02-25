@@ -60,8 +60,8 @@ void grid(int IMAX , int JMAX ,double XL, double XR, double YL, double YU, doubl
 // save nc_x and nc_col to file
         fpar = fopen("parameters.inp", "w+");
     //fprintf(fp,"Time =  %0.16f\n", time) ;
-            fprintf(fpar,"%d \n %d\n",IMAX-1,JMAX-1);
-            fclose(fpar);;
+            fprintf(fpar,"%d \n%d\n",IMAX-1,JMAX-1);
+            fclose(fpar);
 
     fp = fopen("mesh.txt", "w+");
     //fprintf(fp,"Time =  %0.16f\n", time) ;

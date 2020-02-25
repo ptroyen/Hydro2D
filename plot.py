@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pyplot
 
-final = 17
+final = 12
 
 if ( final == 1):
     X = np.loadtxt("testout.txt")[:, 0]
@@ -71,11 +71,14 @@ nc_col,nc_row = np.loadtxt(fparms)[:]
 nc_col = int(nc_col)
 nc_row = int(nc_row)
 
-ncx = nc_col
-ncy = nc_row
+# ncx = nc_col
+# ncy = nc_row
 
 ncx = nc_col
 ncy = nc_row
+
+n_col = nc_col + 1
+n_row = nc_row + 1
 
 cx = np.zeros(nc_col)
 cy = np.zeros(nc_row)

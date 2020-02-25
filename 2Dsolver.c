@@ -145,10 +145,16 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
             }
 	    }
 
-        // Time Steps for first Initial Times
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-8 || n <= 5){
+        // // Time Steps for first Initial Times
+        // if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-8 || n <= 5){
+        //     printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+		// 	dt = 0.5e-3 * 1.0e-8;
+		}
+
+                // Time Steps for first Initial Times // SOD
+        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-4 || n <= 5){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1e-3 * 1.0e-7;
+			dt = 0.5e-3 * 1.0e-4;
 		}
 
     }
@@ -1373,7 +1379,7 @@ struct plasma
 //void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
 
 
-void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]){
+void Source(int nc_row, int nc_col,double q[][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]){
  /*   '''
 ---------------------------------------------------------------------------------------
  >>>>>>>>>>>           ### d/dt()dv = S dv ###          <<<<<<<<<<<<<<<
@@ -1417,12 +1423,13 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
     double ele , neu_m , neu_c , e0 , m_e ,m_n, w_l , C ,Tev , C_log;
 
     double fac_j , Nm , s_val;
+    double read1 , read2 ;
 
 
     // Create two arrays to store read intensity profiles
     double (*In)[nc_col]=malloc(sizeof(double[nc_row][nc_col])),
-             (*Ne)[nc_col]=malloc(sizeof(double[nc_row][nc_row]));
-           //  (*Nm)[nc_col]=malloc(sizeof(double[nc_row][nc_row])) ;
+             (*Ne)[nc_col]=malloc(sizeof(double[nc_row][nc_col]));
+           //  (*Nm)[nc_col]=malloc(sizeof(double[nc_row][nc_col])) ;
     
 
     FILE *fpini ;
@@ -1739,8 +1746,8 @@ flag = 1;
 // Different profiles in Time
     fpini = fopen("out_20.txt", "r");
 
-        for ( i = 0 ; i < nc_row ; i++){
-            for( j = 0 ; j< nc_col ; j++){
+        // for ( i = 0 ; i < nc_row ; i++){
+        //     for( j = 0 ; j< nc_col ; j++){
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
     //    gaus1.A = 1.99007486e+13 ; gaus1.x0 = -5.09472709e-01 ; gaus1.y0 = 4.36820539e-01; gaus1.sigma_x = 7.09271093e-01; gaus1.sigma_y = 3.59628433e-01 ;
@@ -1760,8 +1767,8 @@ flag = 1;
         // source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus3.A, gaus3.x0 , gaus3.y0, gaus3.sigma_x, gaus3.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
         // source_accu[i][j] = source_accu[i][j]+gauss_2d(gaus4.A, gaus4.x0 , gaus4.y0, gaus4.sigma_x, gaus4.sigma_y, (centroid_x[j] - midx)/Rl_rn, (centroid_y[i] - midy)/w0) ;
 
-       }
-    }
+    //    }
+    // }
 }else if (t<6.0*5.0e-9){
 
 // Different profiles in Time
@@ -1852,32 +1859,56 @@ flag = 1;
 
 
 printf("Flag = %d" , flag);
+
+
 if ( flag !=0){
 // Load interpolated data file to array :: selected by time
 for ( i = 0 ; i < nc_row ; i++){
             for( j = 0 ; j< nc_col ; j++){
 
 
-                fscanf(fpini, "%lf %lf", &In[i][j] , &Ne[i][j]);
+                fscanf(fpini,"%lf \t %lf", &read1 , &read2);
+                // printf("%lf \t %lf i = %d , j = %d \n", read1 , read2, i , j);
+
+                In[i][j] = read1 ; Ne[i][j] = read2 ;
+
+                if (!(isfinite(In[i][j])) || !(isfinite(Ne[i][j]))){
+			 printf("**read not finite**");
+            }
+
+                
     
     }
 }
 fclose(fpini);
 
-        Nm = q[0][i][j] * m_n ; // Neutrals number density
+
+
+
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+
+        Nm = q[0][i][j] / m_n ; // Neutrals number density
         neu_c = 2.91e-12 * Ne[i][j] * pow(Tev,-3/2)*C_log ; // Need to fit the electron number density as well.
         neu_m = 3.91e-14 * Nm * pow(Tev,1/2) ;
         fac_j = 0.3 ;
 
         // Calculate the Joule Heating Term now :: From here supply per unit time per unit volume of energy ( 2D :: VOl == AREA)
-        source_accu[i][j] = fac_j*(ele*ele * Ne[i][j] * In[i][j] * (neu_m + neu_c) )/(e0 * m_e * (w_l*w_l + neu_m + neu_c*neu_c) ) ;
+        // source_accu[i][j] = fac_j*(ele*ele * Ne[i][j] * In[i][j] * (neu_m + neu_c) )/(e0 * m_e * C * (w_l*w_l + (neu_m + neu_c)*(neu_m + neu_c)) ) ;
 
-        printf("Ne = %f \t In = %f" , Ne[i][j], In[i][j]);
-        // source_accu[i][j] = fac_j*Ne[i][j] ;
+        // printf("Ne = %f \t In = %f" , Ne[i][j], In[i][j]);
+        // source_accu[i][j] = 0.0e-16*fac_j*Ne[i][j]*In[i][j] ;
+        source_accu[i][j] = 0.0;
+    // if (!(isfinite(q[0][i][j]))){
+	// 		 printf("\n %f  %f  %f  %f  %f \n", q[0][i][j] , neu_c , neu_m , In[i][j] , Ne[i][j]);
+    //         }
+        // printf("Source = %f \n " , source_accu[i][j]);
 
-
-
-
+                
+    
+    }
+}
 }else{
 
 for ( i = 0 ; i < nc_row ; i++){
@@ -1890,6 +1921,7 @@ for ( i = 0 ; i < nc_row ; i++){
 }
 
         printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+
         free(drex); free(drey); free(centroid_x); free(centroid_y);
 
 

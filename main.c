@@ -29,12 +29,12 @@
 // SPECIFIC CONSTANTS
 #define GAMMA 1.4
 #define c_v 0.718*1000
-#define RHO 1.225
+#define RHO 1.2506
 
 
 // BASIC INITIALIZATION
-#define ncx 120
-#define ncy 60
+#define ncx 200
+#define ncy 200
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -51,7 +51,8 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=150 * mili ,lx = l,ly = 0.5*l,CFL = 0.1;
+    // double  l=150 * mili ,lx = 400.0 * mili,ly = 4.0 * mili,CFL = 0.1;
+    double  l=150 * mili ,lx = 1.0,ly = 1.0,CFL = 0.1; // SOD
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -84,7 +85,8 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 50 * nano ;
+    // tend = 50 * nano ;
+    tend = 1 ; // SOD
     //CFL NO.
     //CFL = 0.1;
 
@@ -151,12 +153,12 @@ int main(){
 
 // Initial Step Conditions
 
-    // SOD Problem
-//// Right Going
-//    p0[0] = 1.0 ; 		p0[1] = 0.1;
-//    u0[0] = 0.0 ;		    u0[1] = 0.0 ;
-//    v0[0] = 0.0 ; 		v0[1] = 0.0;
-//    r0[0] = 1.0 ; 		r0[1] = 0.125;
+  //  SOD Problem
+// Right Going
+   p0[0] = 1.0 ; 		p0[1] = 0.1;
+   u0[0] = 0.0 ;		    u0[1] = 0.0 ;
+   v0[0] = 0.0 ; 		v0[1] = 0.0;
+   r0[0] = 1.0 ; 		r0[1] = 0.125;
 
 //// Left Going
 //    p0[0] = 0.1 ; 		p0[1] = 1.0;
@@ -173,12 +175,12 @@ int main(){
 //    r0[0] = 1.0 ; 		r0[1] = 1.0;
 
 
-// Laser Energy Deposition Test -- Standard/Normal
+// // Laser Energy Deposition Test -- Standard/Normal
 
-    p0[0] = 1.0 * ATM ; 	p0[1] = 1.0 * ATM;
-    u0[0] = 0.0 ;		    u0[1] = 0.0 ;
-    v0[0] = 0.0 ; 		    v0[1] = 0.0;
-    r0[0] = 1.0 * RHO ;     r0[1] = 1.0 * RHO;
+//     p0[0] = 1.0 * ATM ; 	p0[1] = 1.0 * ATM;
+//     u0[0] = 0.0 ;		    u0[1] = 0.0 ;
+//     v0[0] = 0.0 ; 		    v0[1] = 0.0;
+//     r0[0] = 1.0 * RHO ;     r0[1] = 1.0 * RHO;
 
 
     for (i=0; i < nc_row ; i++){
@@ -267,6 +269,8 @@ int main(){
             }
         }
 
+
+// TIME INTEGRATION -------------------------------------------- EULER
     // Convective Flux Calculation del(F)/del(V) = DUDT
     // Store on accu_a
         Flux_M(nc_row, nc_col, q,x,y,dt,GAMMA, accu_a);
@@ -277,43 +281,44 @@ int main(){
 
        // void Geom_F(int nc_row, int nc_col,double q[4][nc_row][nc_col],double gamma,int NDIM, double x[], double y[], double source_geom[4][nc_row][nc_col]){
  
-        Geom_F(nc_row, nc_col,q,GAMMA,NDIM,x,y,source_geom);
+        // Geom_F(nc_row, nc_col,q,GAMMA,NDIM,x,y,source_geom);
 
 
     // Now Integrate the equation
         for (i=0; i < nc_row ; i++){
             for (j=0; j < nc_col ; j++){
                 for (k=0; k < 4 ; k++){
-                    dudt[k][i][j] =  - accu_a[k][i][j] - source_geom[k][i][j];
+                    dudt[k][i][j] =  - accu_a[k][i][j] ; //- source_geom[k][i][j];
                         if (k == 3){
-                            dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add diffusive flux
+                            dudt[3][i][j] = dudt[3][i][j] ;//+ source_accu[i][j] ; // + add diffusive flux
                         }
                     qfinal[k][i][j] = q[k][i][j] + dt * dudt[k][i][j] ;
                 }
             }
         }
+// TIME INTEGRATION EULER ENDS -------------------------------------------------
 
 
-//// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
-//// ----------------------------------- start
-//
+// // FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
+// // ----------------------------------- start
+
 //                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
 //                    Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
 //                    for (i=0; i < nc_row ; i++){
-//				            for (j=0; j < nc_col ; j++){
-//					            for (k=0; k < 4 ; k++){
+// 				            for (j=0; j < nc_col ; j++){
+// 					            for (k=0; k < 4 ; k++){
 //                                  dudt[k][i][j] =  - accu_a[k][i][j] ;
 //                                      if (k == 3){
 //                                           dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
 //                                          }
-//
+
 //                            // Integration in time here
 //                            qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
-//
-//						        }
-//				            }
+
+// 						        }
+// 				            }
 //                    }
-//// -------------- END-TVD RK
+// // -------------- END-TVD RK
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
