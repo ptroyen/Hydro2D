@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D # <--- This is important for 3d plotting 
 from scipy.interpolate import griddata
 
 PI = np.pi
@@ -102,6 +103,52 @@ for i in range(8):
     ## First Intensity :: Then Number Density
     result = np.vstack((V_i1, V_i2))
     np.savetxt(fout, result.T)
+
+    # twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
+    # twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
+
+
+    # fig = plt.figure()
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("From Function -- Not-Normalized")
+    # ax.set_ylim(0.03,0.04)
+    # plt.show()
+
+    # fig = plt.figure()
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("From Function -- Not-Normalized")
+    # # ax.set_zlim(0,np.max(Z)+2)
+    # plt.show()
+
+
+
+## Check by reading the data file that you just wrote
+# mesh is in xi , yi :: [][]
+In_int = np.loadtxt("out_0.txt")[:, 0]
+Ne_int = np.loadtxt("out_0.txt")[:, 1]
+
+twd_V1 = np.reshape(In_int,(nc_row,nc_col))
+twd_V2 = np.reshape(Ne_int,(nc_row,nc_col))
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+# cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+ax.set_title("From Interpolation In -- Not-Normalized")
+ax.set_ylim(0.03,0.04)
+plt.show()
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
+# cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+ax.set_title("From Interpolation Ne -- Not-Normalized")
+# ax.set_zlim(0,np.max(Z)+2)
+plt.show()
 
 
 
