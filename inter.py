@@ -38,7 +38,7 @@ xi,yi = np.meshgrid(cx,cy)
 w0 = 200.0e-6 
 lam = 1064.0e-9 
 f = 300.0e-3
-Rl_rn = 0.1* PI*(w0*w0) / lam 
+Rl_rn = PI*(w0*w0) / lam
 
 xmid = cx[int(nc_col/2)]
 ymid = cy[int(nc_row/2)]
@@ -95,8 +95,8 @@ for i in range(8):
     
 
     # # interpolate
-    V_i1 = griddata(points,val1,points_i,method='linear',fill_value=0.0)
-    V_i2 = griddata(points,val2,points_i,method='linear',fill_value=0.0)
+    V_i1 = griddata(points,val1,points_i,method='linear',fill_value=np.min(In_stack))
+    V_i2 = griddata(points,val2,points_i,method='linear',fill_value=np.min(Ne_stack))
 
     # Save the Values in a file to be used by Hydro2D
     
@@ -104,51 +104,107 @@ for i in range(8):
     result = np.vstack((V_i1, V_i2))
     np.savetxt(fout, result.T)
 
-    # twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
-    # twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
+
+## FOR PLOTS __________________________________________________________________________________________
+#     twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
+#     twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
 
 
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("From Function -- Not-Normalized")
-    # ax.set_ylim(0.03,0.04)
-    # plt.show()
+#     fig = plt.figure()
+#     ax = fig.gca(projection='3d')
+#     ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+#     # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+#     ax.set_title("From Function -- Not-Normalized")
+# #    ax.set_ylim(0.03,0.04)
+#     plt.show()
 
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("From Function -- Not-Normalized")
-    # # ax.set_zlim(0,np.max(Z)+2)
-    # plt.show()
+#     fig = plt.figure()
+#     ax = fig.gca(projection='3d')
+#     ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
+#     # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+#     ax.set_title("From Function -- Not-Normalized")
+#     # ax.set_zlim(0,np.max(Z)+2)
+#     plt.show()
+
+#     # Plot the 3D figure of the fitted function and the residuals.
+#     fig = plt.figure()
+#     ax = fig.gca(projection='3d')
+#     ax.plot_surface(x_nor_i,y_nor_i,twd_V1, cmap='plasma')
+#     # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+#     ax.set_title("From Function -- Normalized")
+#     # ax.set_zlim(0,np.max(Z)+2)
+#     plt.show()
+
+#     # Plot the 3D figure of the fitted function and the residuals.
+#     fig = plt.figure()
+#     ax = fig.gca(projection='3d')
+#     ax.plot_surface(x_nor_i,y_nor_i,twd_V2, cmap='plasma')
+#     # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+#     ax.set_title("From Function -- Normalized")
+#     # ax.set_zlim(0,np.max(Z)+2)
+#     plt.show()
+
+
+#     # Plot the 3D figure of the fitted function and the residuals.
+#     fig = plt.figure()
+#     ax = fig.gca(projection='3d')
+#     ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
+#     # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+#     ax.set_title("Data: In")
+#     # ax.set_zlim(0,np.max(Z)+2)
+#     plt.show()
+
+#     # Plot the 3D figure of the fitted function and the residuals.
+#     fig = plt.figure()
+#     ax = fig.gca(projection='3d')
+#     ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
+#     # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+#     ax.set_title("Data : Ne")
+#     # ax.set_zlim(0,np.max(Z)+2)
+#     plt.show()
 
 
 
-## Check by reading the data file that you just wrote
-# mesh is in xi , yi :: [][]
-In_int = np.loadtxt("out_0.txt")[:, 0]
-Ne_int = np.loadtxt("out_0.txt")[:, 1]
+# ## Check by reading the data file that you just wrote
+# # mesh is in xi , yi :: [][]
+# In_int = np.loadtxt("out_0.txt")[:, 0]
+# Ne_int = np.loadtxt("out_0.txt")[:, 1]
 
-twd_V1 = np.reshape(In_int,(nc_row,nc_col))
-twd_V2 = np.reshape(Ne_int,(nc_row,nc_col))
+# twd_V1 = np.reshape(In_int,(nc_row,nc_col))
+# twd_V2 = np.reshape(Ne_int,(nc_row,nc_col))
 
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
-# cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-ax.set_title("From Interpolation In -- Not-Normalized")
-ax.set_ylim(0.03,0.04)
-plt.show()
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("From Interpolation In -- Not-Normalized")
+# # ax.set_ylim(0.03,0.04)
+# plt.show()
 
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
-# cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-ax.set_title("From Interpolation Ne -- Not-Normalized")
-# ax.set_zlim(0,np.max(Z)+2)
-plt.show()
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("From Interpolation Ne -- Not-Normalized")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
+
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("Data")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
+
+
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("Data")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
 
 
 
@@ -202,59 +258,4 @@ plt.show()
 # # ax.set_zlim(0,np.max(Z)+2)
 # plt.show()
 
-###PLOTS /////////////////////////////////////
-# fig, ax = plt.subplots()
-# CS = ax.contour(xi, yi, pi)
-# ax.clabel(CS, inline=0, fontsize=10)
-# ax.set_title('Simplest default with labels')
-
-# tt = np.around(Ti, decimals=0, out=None)
-# tt = tt.astype(int)
-
-# fig, ax = plt.subplots()
-# fig.set_size_inches(15, 15)
-# CS = ax.contour(xi, yi, Ti)
-# # CS = ax.contour(xi, yi, Ti,levels = [200,300,400,550,700,800,900,950,1000,1100,1150,1200],cmap= 'gray_r' )
-# # CS = ax.contourf(xi, yi, Ti,50)
-# fig.colorbar(CS, ax=ax, shrink=1)
-# #ax.set_ylim([0.07,0.17])
-# #ax.set_xlim([0.2,0.6])
-# #ax.clabel(CS, inline=1, fontsize=12)
-# ax.set_title('for temperature; cubic interpolation')
-
-# fig, ax = plt.subplots()
-# fig.set_size_inches(15, 15)
-# CS = ax.contour(xi, yi, Ti,6,cmap= 'gray_r' )
-# # CS = ax.contour(xi, yi, Ti,levels = [200,300,400,550,700,800,900,950,1000,1100,1150,1200],cmap= 'gray_r' )
-# # CS = ax.contourf(xi, yi, Ti,50)
-# #ax.set_ylim([0.07,0.17])
-# #ax.set_xlim([0.2,0.6])
-# fig.colorbar(CS, ax=ax, shrink=1)
-# # ax.clabel(CS, inline=1, fontsize=12)
-# ax.set_title('for temperature; cubic interpolation, 6 levels')
-
-# # tt = np.around(Ti, decimals=0, out=None)
-# # tt = tt.astype(int)
-# fig, ax = plt.subplots()
-# fig.set_size_inches(15, 15)
-# # CS = ax.contour(xi, yi, Ti,6,colors='k')
-# CS = ax.contour(xi, yi, Ti,levels = [200,300,550,700,800,900,950,1100,1150,1200],cmap='gray_r')
-# # CS = ax.contourf(xi, yi, Ti,50)
-# #ax.set_ylim([0.07,0.17])
-# #ax.set_xlim([0.2,0.6])
-# fig.colorbar(CS, ax=ax, shrink=1)
-# # ax.clabel(CS, inline=1, fmt= '%d',fontsize=9)
-# ax.set_title('for temperature; cubic interpolation, 10 levels specified')
-
-# fig,ax = plt.subplots()
-# fig.set_size_inches(15, 15)
-# plt.scatter(x, y, c=T , cmap='plasma')
-# ax.set_ylim([0.03,0.24])
-# ax.set_xlim([0.2,0.6])
-# fig.set_size_inches(15, 15)
-# CS = ax.contour(xi, yi, Ti,levels = [200,300,550,700,800,900,950,1100,1150,1200],colors='black')
-# #CS = ax.contourf(xi, yi, pi,150)
-# ax.set_ylim([0.03,0.24])
-# ax.set_xlim([0.2,0.6])
-# ax.set_title('for temperature; imported data and isolines compared')
-# plt.show()
+###PLOTS ///////////////////////////////////// END ------------------------------------------------
