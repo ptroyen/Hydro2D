@@ -28,7 +28,7 @@ void grid(int IMAX , int JMAX ,double XL, double XR, double YL, double YU, doubl
 
 	int i,j;
     double zt[IMAX], et[JMAX] , val , m;
-    FILE *fp ;
+    FILE *fp , *fpar;
 
     m = 1.8 ; // more than one means more fine at the middle
 		for (i=0; i < IMAX ; i++){
@@ -56,13 +56,22 @@ void grid(int IMAX , int JMAX ,double XL, double XR, double YL, double YU, doubl
 
 		}
 
+
+// save nc_x and nc_col to file
+        fpar = fopen("parameters.inp", "w+");
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
+            fprintf(fpar,"%d \n %d\n",IMAX-1,JMAX-1);
+            fclose(fpar);;
+
     fp = fopen("mesh.txt", "w+");
     //fprintf(fp,"Time =  %0.16f\n", time) ;
     for (j=0; j < JMAX ; j++){
         for (i=0; i < IMAX ; i++){
-            fprintf(fp,"%0.7f       %0.7f\n",x[i],y[j]);
+            fprintf(fp,"%0.7f \t %0.7f\n",x[i],y[j]);
         }
    }
    fclose(fp);
+
+   
 
 } 

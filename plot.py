@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pyplot
 
-final = 13
+final = 17
 
 if ( final == 1):
     X = np.loadtxt("testout.txt")[:, 0]
@@ -37,6 +37,7 @@ else:
 #     P = np.loadtxt("4200.txt")[:, 5]
 #     E = np.loadtxt("4200.txt")[:, 6]
 
+    # i = 'initial' #4 * 700
     i = 'testout2' #4 * 700
     fname = str(i)+'.txt'
 
@@ -63,9 +64,15 @@ else:
 
 ## COL 4
 ## ROW 3
+    
+fparms = 'parameters.inp'
+nc_col,nc_row = np.loadtxt(fparms)[:]
 
-nc_row = 200
-nc_col = 200
+nc_col = int(nc_col)
+nc_row = int(nc_row)
+
+ncx = nc_col
+ncy = nc_row
 
 ncx = nc_col
 ncy = nc_row
@@ -110,13 +117,20 @@ for i in range(nc_row):
 mx,my = np.meshgrid(cx,cy)     
 
 ## plot mesh
-pyplot.figure(211)
+# pyplot.figure(211)
 
-pyplot.plot(cx,mx,'k')
-pyplot.plot(my.T,cy,'k')
-## pyplot.plot(cy)
-pyplot.legend()
+# pyplot.plot(cx,mx,'k')
+# pyplot.plot(my.T,cy,'k')
+# ## pyplot.plot(cy)
+# pyplot.legend()
+# pyplot.show()
+
+pyplot.figure()
+pyplot.plot(mx,my,'b')
+pyplot.plot(mx.T,my.T,'b')
+pyplot.title("Algebraic Grid")
 pyplot.show()
+
 
 pyplot.figure(5)
 pyplot.contourf(cx,cy,r,160,cmap = 'RdGy')

@@ -3,23 +3,21 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
-p = []
-T = []
-x = []
-y = []
-z = [] 
+PI = np.pi
 
-
+### MESH PART
+# Mesh input parameters
 fparms = 'parameters.inp'
 nc_col,nc_row = np.loadtxt(fparms)[:]
 
+nc_col = int(nc_col)
+nc_row = int(nc_row)
 
 ncx = nc_col
 ncy = nc_row
 
 cx = np.zeros(nc_col)
 cy = np.zeros(nc_row)
-
 
 X = np.loadtxt("mesh.txt")[:, 0]
 Y = np.loadtxt("mesh.txt")[:, 1]
@@ -32,44 +30,132 @@ for i in range(nc_row):
     cy[i] = Y[i*nc_col]
 
 
-mx,my = np.meshgrid(cx,cy) 
+# interpolate on this grid
+xi,yi = np.meshgrid(cx,cy)
+
+# The Dual Pulse Laser :: SECOND PULSE
+w0 = 200.0e-6 
+lam = 1064.0e-9 
+f = 300.0e-3
+Rl_rn = 0.1* PI*(w0*w0) / lam 
+
+xmid = cx[int(nc_col/2)]
+ymid = cy[int(nc_row/2)]
+
+#normalized one
+x_nor_i = (xi-xmid) / Rl_rn
+y_nor_i = (yi - ymid) / w0
+
+## INTERPOLATION VALUES EXTRACT
+# Import The Files
+## ---------------------------
+pre1 = 'I_Pulse2_'
+pre2 = 'Rho_e_'
+ext = '.txt'
+
+## LOOP for diffrent files
+for i in range(8):
+
+    index = i*5
+    str_i = str(index)
+
+    fname1 = pre1+str_i
+    fname2 = pre2+str_i
+
+    fout = 'out_'+str_i + ext
+    # fout2 = 'out_'+fname2 + ext
+
+
+    Z_r = np.loadtxt(fname1+ext)[0,1:]
+    R_r = np.loadtxt(fname1+ext)[1:,0]
+    In = np.loadtxt(fname1+ext)[1:,1:] #Value read, already in matrix form
+    Ne = np.loadtxt(fname2+ext)[1:,1:]
+
+    In_stack = np.vstack((np.flipud(In),In))
+    Ne_stack = np.vstack((np.flipud(Ne),Ne))
+    
+    
+    
+    R_r_stack = np.hstack((np.flipud(-R_r),R_r))
+
+    X_r, Y_r = np.meshgrid(Z_r, R_r_stack)
+    V_r1 = In_stack 
+    V_r2 = Ne_stack
+
+    points = np.vstack((X_r.ravel(), Y_r.ravel()))
+    points = points.T
+
+    val1 = V_r1.ravel()
+    val2 = V_r2.ravel()
+
+
+    points_i = np.vstack((x_nor_i.ravel(), y_nor_i.ravel()))
+    points_i = points_i.T
+    
+
+    # # interpolate
+    V_i1 = griddata(points,val1,points_i,method='linear',fill_value=0.0)
+    V_i2 = griddata(points,val2,points_i,method='linear',fill_value=0.0)
+
+    # Save the Values in a file to be used by Hydro2D
+    
+    ## First Intensity :: Then Number Density
+    result = np.vstack((V_i1, V_i2))
+    np.savetxt(fout, result.T)
 
 
 
-import csv
-with open('for_isolines0.9.csv') as csvfile:
-  
-    readCSV = csv.reader(csvfile, delimiter=',')
-    headers = next(csvfile) 
-    for row in readCSV:
-        if float(row[7]) > 0.0:
-            temp_p = row[0]
-            temp_T = row[1]
-            temp_x = row[5]
-            temp_y = row[6]
-            temp_z = row[7]
-            p.append(float(temp_p))
-            T.append(float(temp_T))
-            x.append(float(temp_x))
-            y.append(float(temp_y))
-            z.append(float(temp_z))
-        
-        
-        
-# target grid to interpolate to
-xi = np.arange(0.2,0.6,0.0001)
-yi = np.arange(0.05,0.2,0.0001)
-xi,yi = np.meshgrid(xi,yi)
+# plt.plot(points_i[:,0],points_i[:,1],V_i1)
 
 
-# interpolate
-#zi = griddata((x,y),z,(xi,yi),method='linear')
-pi = griddata((x,y),p,(xi,yi),method='linear',fill_value=0.0)
-Ti = griddata((x,y),T,(xi,yi),method='linear',fill_value=0.0)  
+# twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
+# twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
 
-# np.savetxt("cubic.csv", (pi.flatten(), Ti.flatten()))
+# # Plot the 3D figure of the fitted function and the residuals.
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(x_nor_i,y_nor_i,twd_V1, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("From Function -- Normalized")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
 
-###PLOTS
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("From Function -- Not-Normalized")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
+
+
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("Data")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
+
+
+# # Plot the 3D figure of the fitted function and the residuals.
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(x_nor_i,y_nor_i,twd_V2, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("From Function")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
+
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
+# # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+# ax.set_title("Data")
+# # ax.set_zlim(0,np.max(Z)+2)
+# plt.show()
+
+###PLOTS /////////////////////////////////////
 # fig, ax = plt.subplots()
 # CS = ax.contour(xi, yi, pi)
 # ax.clabel(CS, inline=0, fontsize=10)
@@ -78,50 +164,50 @@ Ti = griddata((x,y),T,(xi,yi),method='linear',fill_value=0.0)
 # tt = np.around(Ti, decimals=0, out=None)
 # tt = tt.astype(int)
 
-fig, ax = plt.subplots()
-fig.set_size_inches(15, 15)
-CS = ax.contour(xi, yi, Ti)
-# CS = ax.contour(xi, yi, Ti,levels = [200,300,400,550,700,800,900,950,1000,1100,1150,1200],cmap= 'gray_r' )
-# CS = ax.contourf(xi, yi, Ti,50)
-fig.colorbar(CS, ax=ax, shrink=1)
-#ax.set_ylim([0.07,0.17])
-#ax.set_xlim([0.2,0.6])
-#ax.clabel(CS, inline=1, fontsize=12)
-ax.set_title('for temperature; cubic interpolation')
+# fig, ax = plt.subplots()
+# fig.set_size_inches(15, 15)
+# CS = ax.contour(xi, yi, Ti)
+# # CS = ax.contour(xi, yi, Ti,levels = [200,300,400,550,700,800,900,950,1000,1100,1150,1200],cmap= 'gray_r' )
+# # CS = ax.contourf(xi, yi, Ti,50)
+# fig.colorbar(CS, ax=ax, shrink=1)
+# #ax.set_ylim([0.07,0.17])
+# #ax.set_xlim([0.2,0.6])
+# #ax.clabel(CS, inline=1, fontsize=12)
+# ax.set_title('for temperature; cubic interpolation')
 
-fig, ax = plt.subplots()
-fig.set_size_inches(15, 15)
-CS = ax.contour(xi, yi, Ti,6,cmap= 'gray_r' )
-# CS = ax.contour(xi, yi, Ti,levels = [200,300,400,550,700,800,900,950,1000,1100,1150,1200],cmap= 'gray_r' )
-# CS = ax.contourf(xi, yi, Ti,50)
-#ax.set_ylim([0.07,0.17])
-#ax.set_xlim([0.2,0.6])
-fig.colorbar(CS, ax=ax, shrink=1)
-# ax.clabel(CS, inline=1, fontsize=12)
-ax.set_title('for temperature; cubic interpolation, 6 levels')
+# fig, ax = plt.subplots()
+# fig.set_size_inches(15, 15)
+# CS = ax.contour(xi, yi, Ti,6,cmap= 'gray_r' )
+# # CS = ax.contour(xi, yi, Ti,levels = [200,300,400,550,700,800,900,950,1000,1100,1150,1200],cmap= 'gray_r' )
+# # CS = ax.contourf(xi, yi, Ti,50)
+# #ax.set_ylim([0.07,0.17])
+# #ax.set_xlim([0.2,0.6])
+# fig.colorbar(CS, ax=ax, shrink=1)
+# # ax.clabel(CS, inline=1, fontsize=12)
+# ax.set_title('for temperature; cubic interpolation, 6 levels')
 
-# tt = np.around(Ti, decimals=0, out=None)
-# tt = tt.astype(int)
-fig, ax = plt.subplots()
-fig.set_size_inches(15, 15)
-# CS = ax.contour(xi, yi, Ti,6,colors='k')
-CS = ax.contour(xi, yi, Ti,levels = [200,300,550,700,800,900,950,1100,1150,1200],cmap='gray_r')
-# CS = ax.contourf(xi, yi, Ti,50)
-#ax.set_ylim([0.07,0.17])
-#ax.set_xlim([0.2,0.6])
-fig.colorbar(CS, ax=ax, shrink=1)
-# ax.clabel(CS, inline=1, fmt= '%d',fontsize=9)
-ax.set_title('for temperature; cubic interpolation, 10 levels specified')
+# # tt = np.around(Ti, decimals=0, out=None)
+# # tt = tt.astype(int)
+# fig, ax = plt.subplots()
+# fig.set_size_inches(15, 15)
+# # CS = ax.contour(xi, yi, Ti,6,colors='k')
+# CS = ax.contour(xi, yi, Ti,levels = [200,300,550,700,800,900,950,1100,1150,1200],cmap='gray_r')
+# # CS = ax.contourf(xi, yi, Ti,50)
+# #ax.set_ylim([0.07,0.17])
+# #ax.set_xlim([0.2,0.6])
+# fig.colorbar(CS, ax=ax, shrink=1)
+# # ax.clabel(CS, inline=1, fmt= '%d',fontsize=9)
+# ax.set_title('for temperature; cubic interpolation, 10 levels specified')
 
-fig,ax = plt.subplots()
-fig.set_size_inches(15, 15)
-plt.scatter(x, y, c=T , cmap='plasma')
-ax.set_ylim([0.03,0.24])
-ax.set_xlim([0.2,0.6])
-fig.set_size_inches(15, 15)
-CS = ax.contour(xi, yi, Ti,levels = [200,300,550,700,800,900,950,1100,1150,1200],colors='black')
-#CS = ax.contourf(xi, yi, pi,150)
-ax.set_ylim([0.03,0.24])
-ax.set_xlim([0.2,0.6])
-ax.set_title('for temperature; imported data and isolines compared')
-plt.show()
+# fig,ax = plt.subplots()
+# fig.set_size_inches(15, 15)
+# plt.scatter(x, y, c=T , cmap='plasma')
+# ax.set_ylim([0.03,0.24])
+# ax.set_xlim([0.2,0.6])
+# fig.set_size_inches(15, 15)
+# CS = ax.contour(xi, yi, Ti,levels = [200,300,550,700,800,900,950,1100,1150,1200],colors='black')
+# #CS = ax.contourf(xi, yi, pi,150)
+# ax.set_ylim([0.03,0.24])
+# ax.set_xlim([0.2,0.6])
+# ax.set_title('for temperature; imported data and isolines compared')
+# plt.show()

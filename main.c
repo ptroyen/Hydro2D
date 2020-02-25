@@ -33,8 +33,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 200
-#define ncy 200
+#define ncx 120
+#define ncy 60
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -51,7 +51,7 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=150 * mili ,lx = l,ly = l,CFL = 0.1;
+    double  l=150 * mili ,lx = l,ly = 0.5*l,CFL = 0.1;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -60,10 +60,16 @@ int main(){
     static double  p0[2], u0[2], v0[2], r0[2] ;
 
     static int count = 0 ;
-    FILE *fp , *fpini;
+    FILE *fp , *fpini ;
 
-    // INITIALIZATION OF VARIABLES  - DONE
-        printf("\nVARIABLES INITIALIZED \n");
+    // printf("\nReading Input :: parameters.inp\n");
+    // fpini = fopen("parameters.inp", "r");
+    //     fscanf(fpini, "%d", &ncx);
+    //     fscanf(fpini, "\n%d", &ncy);
+    //  fclose(fpini);
+
+    // // INITIALIZATION OF VARIABLES  - DONE
+    //     printf("\nVARIABLES INITIALIZED \n");
 
 
 ///***********************************************************
@@ -78,7 +84,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 0.1 * nano ;
+    tend = 50 * nano ;
     //CFL NO.
     //CFL = 0.1;
 
@@ -103,7 +109,13 @@ int main(){
     static double  speed[nc_row][nc_col],tempr[nc_row][nc_col], E[nc_row][nc_col], a[nc_row][nc_col] ;
     static double  q[4][nc_row][nc_col],qfinal[4][nc_row][nc_col],
             dudt[4][nc_row][nc_col],accu_a[4][nc_row][nc_col], source_accu[nc_row][nc_col], source_geom[4][nc_row][nc_col];
-             // add new flux accumulation definition and pass later
+
+
+    // static double  p[nc_row][nc_col] , u[nc_row][nc_col] , v[nc_row][nc_col] , r[nc_row][nc_col] ;
+    // static double  speed[nc_row][nc_col],tempr[nc_row][nc_col], E[nc_row][nc_col], a[nc_row][nc_col] ;
+    // static double  q[4][nc_row][nc_col],qfinal[4][nc_row][nc_col],
+    //         dudt[4][nc_row][nc_col],accu_a[4][nc_row][nc_col], source_accu[nc_row][nc_col], source_geom[4][nc_row][nc_col];
+    //          // add new flux accumulation definition and pass later
 
 
 	double exp_ratio = 1.4;
@@ -130,7 +142,7 @@ int main(){
 
 
 
-        printf("MESH DEFINED\n");
+        printf("*******MESH DEFINED********\n");
 
 
 
@@ -229,7 +241,7 @@ int main(){
         }
     }
         printf("INITIAL VARIABLES WRITTEN ON initial.txt\n");
-
+    fclose(fpini);
 
 
     time = t0;
