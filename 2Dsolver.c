@@ -105,16 +105,12 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 //     provides dt required to maintain the provided CFL
 //     n is number of time steps
 
-    // double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
-    //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
-    //
 
 	int i,j;
 
 	// Dynamically Allocate the array : So that large arrays are not stored in stack
 	double (*dx) = malloc(sizeof(double[nc_col])) ,
              (*dy) = malloc(sizeof(double[nc_row]));
-	// double dx[nc_col], dy[nc_row], dt;
 	double dt , spc , mspc , dts , mspcx, mspcy;
 
 	for (i=0; i< nc_col ; i ++){
@@ -144,9 +140,14 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	    }
 
         // Time Steps for first Initial Times
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
+        if ( n <= 10){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1e-3 * 1.0e-5;
+			dt = 1.0e-5;
+		}
+
+        if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-1 ){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 1.0e-5;
 		}
 
     }
@@ -178,11 +179,25 @@ void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma
 }
 
 
-void sing_prmcalculate(double q[],double gamma, double *r,double *u,double *v,double *p){
-    *r = q[0] ;
-    *u = q[1]/ (*r) ;
-    *v = q[2]/ (*r) ;
-    *p = (gamma - 1)*(q[3] - 0.5 * (*r) * ((*u) * (*u) + (*v) * (*v))) ;
+void sing_prmcalculate(double q[],double gamma, double *pr,double *pu,double *pv,double *pp){
+    double r, u, v , p ;
+    // *r = q[0] ;
+    // *u = q[1]/ (*r) ;
+    // *v = q[2]/ (*r) ;
+    // *p = (gamma - 1)*(q[3] - 0.5 * (*r) * ((*u) * (*u) + (*v) * (*v))) ;
+
+    r = q[0] ;
+    u = q[1]/r ;
+    v = q[2]/r ;
+    p = (gamma - 1)*(q[3] - 0.5*r*(u*u + v*v)) ;
+
+    *pr = r ;
+    *pu = u ;
+    *pv = v ;
+    *pp = p ;
+
+
+
 }
 
 
@@ -245,7 +260,7 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 	double CL, CR, CUP, PPV ,PMIN,PMAX,QMAX,PM,UM, PQ,PTL,PTR,GEL,GER;
 
 
-    QUSER = 2.0; //##<<<<<<<<<<<< Select yourself
+    QUSER = 2.0; // Select yourself
 
     CL = sqrt(GAMMA*PL/DL);
     CR = sqrt(GAMMA*PR/DR);
@@ -261,7 +276,7 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 //#      Compute guess pressure from PVRS Riemann solver
     CUP  = 0.25*(DL + DR)*(CL + CR);
     PPV  = 0.5*(PL + PR) + 0.5*(UL - UR)*CUP;
-    PPV  = fmax(0.0, PPV);
+    PPV  = fmax(0.0, PPV); //valgrind
     PMIN = fmin(PL,  PR);
     PMAX = fmax(PL,  PR);
     QMAX = PMAX/PMIN;
@@ -274,7 +289,7 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
     }
 
     else{
-        if(PPV<PMIN){
+         if(PPV<PMIN){
             // Select Two-Rarefaction Riemann solver
             PQ  = pow((PL/PR),G1);
             UM  = (PQ*UL/CL + UR/CR + G4*(PQ - 1.0))/(PQ/CL + 1.0/CR);
@@ -302,6 +317,7 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 
     *SM = UM;
 
+    //valgrind
     if(PM<PR){
             *SR = UR + CR;
     }
@@ -353,17 +369,15 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     ny = nre_col + 4 ;
 
 
-     //// double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
-    //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
-    //	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
-
-
-
     // Real cells
     // flux and accumulation initialization
     double (*Flux)[nre_row][nre_col] = malloc(sizeof(double[4][nre_row][nre_col])),
          (*xflux)[nrec_row][nre_col] = malloc(sizeof(double[4][nrec_row][nre_col])),
          (*yflux)[nre_row][nrec_col] = malloc(sizeof(double[4][nre_row][nrec_col])); // <--- allocate mem
+
+        memset(xflux,0.0,sizeof(double[4][nre_row][nrec_col]));
+        memset(yflux,0.0,sizeof(double[4][nrec_row][nre_col]));
+        // *xflux = {0.0} ;*yflux = {0.0};
 
     double (*drex)= malloc(sizeof(double[nrec_col])),
             (*drey)=malloc(sizeof(double[nrec_row])),
@@ -633,14 +647,6 @@ double dxr, dxl, dyu, dyd ;
 			y[i] = yre[i-2];
 		}
 
-//    gxl = [-dxl*2, -dxl]
-//    gxr = [xre[-1]+dxr, xre[-1]+2*dxr]
-//
-//    gyd = [-dyd*2, -dyd]
-//    gyu = [yre[-1]+dyu, yre[-1]+2*dyu]
-//
-//    x = numpy.concatenate([gxl, xre, gxr])
-//    y = numpy.concatenate([gyd, yre, gyu])
 
 //    ## assemble all props in q, with conserved variables
 	for (i=0;i< nc_row; i++){
@@ -677,20 +683,8 @@ double dxr, dxl, dyu, dyd ;
 
 
 
-//    ## Supply vol[][], row and column to get the area of each cell
-//    vol = numpy.matmul(dxs[:,None],dys[None,:])
-
-
-
-//    cflx = numpy.zeros_like(r)
-//    cfly = numpy.zeros_like(r)
-
-
-//    ## As the velocity of the flow changes need to adapt the time step at each time integration keeping the CFL condition satisified
-//    ## Make a new funciton that does this
 //
 //    ## w = 0; CD type , w = 1; Warming-beam, w = -1; Lax-Wendroff
-//    # w = (2*c - np.sign(c))/3 ## Third order accurate in space and time
 
     
 
@@ -887,8 +881,8 @@ double dxr, dxl, dyu, dyd ;
 
 
 /// USE HLLC
-//    HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
-//    HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
+   HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
+   HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
 
 
@@ -898,11 +892,21 @@ double dxr, dxl, dyu, dyd ;
 
     /// Rusonov
 
-    RSflux(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
-    RSflux(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
+    // RSflux(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
+    // RSflux(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
 
+// // Print the flux to check
+// for (i = 0 ; i < nrec_row ; i++){
+//     printf("\n");
+//     	for ( j = 0 ; j < nre_col ; j++){
+    		
+//     			printf("%f ",xflux[3][i][j]) ;
+    
+//     	}
+//     }
 
+//     printf("\n");
 
 //    ## accumulation of flux from both the sides
 
@@ -915,17 +919,6 @@ double dxr, dxl, dyu, dyd ;
     }
 //    accu = (-xflux[:,:,:-1] + xflux[:,:,1:])/drex[None,None,:] + (- yflux[:,:-1,:] + yflux[:,1:,:])/drey[None,:,None]
 
-
-
-//    ## direct flux contribution in time rate of change of the property, after this integrate in time
-//    dudt = accu
-//    return dudt
-
-   // double (*Flux)[nre_row][nre_col] = malloc(sizeof(double[4][nre_row][nre_col])), (*xflux)[nrec_row][nre_col] = malloc(sizeof(double[4][nrec_row][nre_col])),(*yflux)[nre_row][nrec_col] = malloc(sizeof(double[4][nre_row][nrec_col])); // <--- allocate mem
-    // double (*rre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
-//            (*ure)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
-//            (*vre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col])),
-//            (*pre)[nrec_col]=malloc(sizeof(double[nrec_row][nrec_col]));
 
 
     free(Flux); free(xflux);  free(yflux);
@@ -1264,10 +1257,10 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
                                 			Flux[k][m][n] = fil[k][i][j];
                                 	}
                                 }
-                                if (SL<0.0 && SR>0.0){
+                                if (SL<0.0 && SR>0.0){ //valgrind
                                    // ## SUBSONIC FLOW
 
-                                    if (SM>=0.0 && SL<0.0){
+                                    if (SM>=0.0 && SL<0.0){ //valgrind
                                       //  ## SUBSONIC FLOW to the RIGHT##
                                         ENEL   = qil[3][i][j]/rl  + (SM - ul)*(SM + pl/(rl*(SL - ul))) ;
                                         CSL[0] = rl*(SL - ul)/(SL - SM) ;
@@ -1296,7 +1289,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 
                                 }
 
-                                if(SR<=0.0){
+                                if(SR<=0.0){ //valgrind
                                        // ## Left-going supersonic flow
 
                                 	for ( k = 0 ; k< 4 ; k++){
@@ -1380,7 +1373,7 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 	 double che , midx , midy , fac_tear;
 //    source_accu = numpy.zeros([nc_row,nc_col])
 
-
+double ener_den ,srad;
 
      //## Centroids
 
@@ -1465,20 +1458,23 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 	midy = centroid_y[(int)(nc_row/2)];
 
 
-    
+    vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
+        printf("\nVOL = %0.12f\n", vol);
+
+    ener_den = 0.311357 / (4.0*vol) ;
+    srad = 4.0*vol / 3.1415 ;
 
     if (t==0.0){
 
-        for ( i = 0 ; i < nc_row ; i++){
-            for( j = 0 ; j< nc_col ; j++){
+       for ( i = 0 ; i < nc_row ; i++){
+           for( j = 0 ; j< nc_col ; j++){
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
 /// AT CENTER --------------------------------------------------
         // At Center
-        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
-        printf("\nVOL = %lf\n", vol);
+        
         // source_accu[int(nc_row/2),int(nc_col/2)] = 1.0*0.244816/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
-       // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 1.0*0.311357/(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
+        source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 1.0*0.311357/(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
 
 
         /// LASER ENRGY DEPOSITION
@@ -1500,32 +1496,32 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
 /// TEAR DROP WITH MIDDLE CIRCULAR SHAPE -------------------------------------
 
-// Tear Shape
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
-            vol = drex[j] * drey[i];
-            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
-
-
-
-            fac_tear = 20000.0;
-            //more intense one as well one also tear shaped
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+//// Tear Shape
+//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
+//            vol = drex[j] * drey[i];
+//            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
 //
 //
-//            fac_tear = 100000.0;
-//            //more intense one as well, also tear shaped
-//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
-//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
-
-
-             /////// Circle at the middle lobe of tear
-            che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
-
-
-                    }
-                }
+//
+//            fac_tear = 20000.0;
+//            //more intense one as well one also tear shaped
+//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
+//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+////
+////
+////            fac_tear = 100000.0;
+////            //more intense one as well, also tear shaped
+////            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
+////            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
+//
+//
+//             /////// Circle at the middle lobe of tear
+        //    che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy),2) - srad ;
+        //    if (che <= 0.0){source_accu[i][j] = ener_den /(dt) ;}
+//
+//
+                   }
+               }
             }
 
          printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );

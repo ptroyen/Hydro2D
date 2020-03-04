@@ -33,8 +33,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 200
-#define ncy 200
+#define ncx 60
+#define ncy 60
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -51,7 +51,8 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=20 * mili ,lx = l,ly = l,CFL = 0.25;
+//    double  l=20 * mili ,lx = l,ly = l,CFL = 0.25;
+    double  l=2.6 ,lx = l,ly = l,CFL = 0.2;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -78,7 +79,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 30.0 * micro ;
+    tend = 0.17 ;
     //CFL NO.
     //CFL = 0.1;
 
@@ -155,18 +156,18 @@ int main(){
 
     // Initial Step Conditions For SEDOV - 2D
 
-//    p0[0] = 1*1e-6 ; 	    p0[1] = 1*1e-6;
-//    u0[0] = 0.0 ;		    u0[1] = 0.0 ;
-//    v0[0] = 0.0 ; 		v0[1] = 0.0;
-//    r0[0] = 1.0 ; 		r0[1] = 1.0;
+    p0[0] = 1*1e-6 ; 	    p0[1] = 1*1e-6;
+    u0[0] = 0.0 ;		    u0[1] = 0.0 ;
+    v0[0] = 0.0 ; 		v0[1] = 0.0;
+    r0[0] = 1.0 ; 		r0[1] = 1.0;
 
 
 // Laser Energy Deposition Test -- Standard/Normal
-
-    p0[0] = 1.0 * ATM ; 	p0[1] = 1.0 * ATM;
-    u0[0] = 0.0 ;		    u0[1] = 0.0 ;
-    v0[0] = 0.0 ; 		    v0[1] = 0.0;
-    r0[0] = 1.0 * RHO ;     r0[1] = 1.0 * RHO;
+//
+//    p0[0] = 1.0 * ATM ; 	p0[1] = 1.0 * ATM;
+//    u0[0] = 0.0 ;		    u0[1] = 0.0 ;
+//    v0[0] = 0.0 ; 		    v0[1] = 0.0;
+//    r0[0] = 1.0 * RHO ;     r0[1] = 1.0 * RHO;
 
 
     for (i=0; i < nc_row ; i++){
@@ -282,26 +283,26 @@ int main(){
         }
 
 
-//// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
-//// ----------------------------------- start
-//
-//                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
-//                    Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
-//                    for (i=0; i < nc_row ; i++){
-//				            for (j=0; j < nc_col ; j++){
-//					            for (k=0; k < 4 ; k++){
-//                                  dudt[k][i][j] =  - accu_a[k][i][j] ;
-//                                      if (k == 3){
-//                                           dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
-//                                          }
-//
-//                            // Integration in time here
-//                            qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
-//
-//						        }
-//				            }
-//                    }
-//// -------------- END-TVD RK
+// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
+// ----------------------------------- start
+
+                   Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
+                  // Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
+                   for (i=0; i < nc_row ; i++){
+				            for (j=0; j < nc_col ; j++){
+					            for (k=0; k < 4 ; k++){
+                                 dudt[k][i][j] =  - accu_a[k][i][j] ;
+                                     if (k == 3){
+                                          dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
+                                         }
+
+                           // Integration in time here
+                           qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
+
+						        }
+				            }
+                   }
+// -------------- END-TVD RK
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
@@ -351,7 +352,7 @@ int main(){
         }
         if ( count == 500){
             fp = fopen("testout40.txt", "w+");
-            fprintf(fp,"Time =  %0.16f\n", time) ;
+            // fprintf(fp,"Time =  %0.16f\n", time) ;
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
                     fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
@@ -368,7 +369,7 @@ int main(){
             char title[16];
             sprintf(title, "%d.txt", count);
             fp = fopen(title, "w+");
-            fprintf(fp,"Time =  %0.16f\n", time);
+            // fprintf(fp,"Time =  %0.16f\n", time);
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
                     fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
