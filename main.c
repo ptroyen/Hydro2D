@@ -34,8 +34,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 200
-#define ncy 200
+#define ncx 250
+#define ncy 250
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -52,13 +52,16 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=20 * mili ,lx = 600*mili,ly = 4.0*mili,CFL = 0.25;
+    double  l=20 * mili ,lx = 80*mili,ly = 80.0*mili,CFL = 0.15;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
     // Initial Conditions Storage Variables
     // LEFT and RIGHT States
     static double  p0[2], u0[2], v0[2], r0[2] ;
+
+    double stored_energy ;
+    char title[16];
 
     static int count = 0 ;
     FILE *fp , *fpini;
@@ -80,7 +83,7 @@ int main(){
     // Time
     t0 = 0.0;
     // tend = 30.0 * micro ; // Laser tear shape
-    tend = 30.0 * nano ; // Laser tear shape
+    tend = 300.0 * micro ; // Laser tear shape
     //CFL NO.
     //CFL = 0.1;
 
@@ -236,7 +239,7 @@ int main(){
 
     time = t0;
 
-
+stored_energy = 0.0 ;
 ///*******************************************************************
     /// INTEGRATION LOOP STARTS
 
@@ -284,26 +287,38 @@ int main(){
         }
 
 
-//// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
-//// ----------------------------------- start
-//
-//                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
-//                    Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
-//                    for (i=0; i < nc_row ; i++){
-//				            for (j=0; j < nc_col ; j++){
-//					            for (k=0; k < 4 ; k++){
-//                                  dudt[k][i][j] =  - accu_a[k][i][j] ;
-//                                      if (k == 3){
-//                                           dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
-//                                          }
-//
-//                            // Integration in time here
-//                            qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
-//
-//						        }
-//				            }
-//                    }
-//// -------------- END-TVD RK
+// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
+// ----------------------------------- start
+
+                   Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
+                   Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
+                   for (i=0; i < nc_row ; i++){
+				            for (j=0; j < nc_col ; j++){
+					            for (k=0; k < 4 ; k++){
+                                 dudt[k][i][j] =  - accu_a[k][i][j] ;
+                                     if (k == 3){
+                                          dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
+                                         }
+
+                           // Integration in time here
+                           qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
+
+						        }
+				            }
+                   }
+// -------------- END-TVD RK
+
+
+// Sum of energy added
+if ( time < 40*nano){
+ for (i=0; i < nc_row ; i++){
+                for (j=0; j < nc_col ; j++){
+                    for (k=0; k < 4 ; k++){
+                            stored_energy = stored_energy+ qfinal[3][i][j] - q[3][i][j] ;
+                    }
+                }
+        }
+}
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
@@ -351,8 +366,9 @@ int main(){
            }
            fclose(fp);
         }
-        if ( count == 500){
-            fp = fopen("testout40.txt", "w+");
+        if ( count%5 == 0 && count < 100 ){
+            sprintf(title, "add%d.txt", count);
+            fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time) ;
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
@@ -363,11 +379,8 @@ int main(){
            fclose(fp);
         }
 
-
-
-
-        if ( count % 700 == 0){
-            char title[16];
+        if ( count % 50 == 0){
+            
             sprintf(title, "%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time);
@@ -395,6 +408,15 @@ int main(){
                     cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
         }
    }
+   fclose(fp);
+
+
+
+   //added energy total
+    fp = fopen("energy.txt", "w+");
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
+    fprintf(fp,"Energy added = %0.7f \n",stored_energy);
+  
    fclose(fp);
 
     return 0;

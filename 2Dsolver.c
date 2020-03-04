@@ -7,7 +7,6 @@
  Description : 2D Euler Solver with Energy Addition
  ============================================================================
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -150,11 +149,19 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
         //     printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
 		// 	dt = 1e-3 * 1.0e-5;
 
-             if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-8 || n <= 5){
-            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1.0e-2 * 1.0e-8;
+            //  if (n <= 500){
+            // printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			// dt = 1.0e-1 * 1.0e-8; }
 
-		}
+            // if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
+            // printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			// dt = 3.0e-8;
+
+           
+
+		// }
+
+         dt = 1.0e-9; // FOR DMD DATA GENERATION
 
     }
 
@@ -893,9 +900,9 @@ double dxr, dxl, dyu, dyd ;
 
 
 
-/// USE HLLC
-//    HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
-//    HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
+// USE HLLC
+   HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
+   HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
 
 
@@ -905,8 +912,8 @@ double dxr, dxl, dyu, dyd ;
 
     /// Rusonov
 
-    RSflux(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
-    RSflux(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
+    // RSflux(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
+    // RSflux(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
 
 
@@ -1419,7 +1426,7 @@ void Source(int nc_row, int nc_col,double q[][nc_row][nc_col], double x[], doubl
 
     // The Dual Pulse Laser :: SECOND PULSE
     w0 = 200.0e-6 ; lam = 1064.0e-9 ; f = 300.0e-3 ;
-    Rl_rn = 0.1* PI*(w0*w0) / lam ;
+    Rl_rn = PI*(w0*w0) / lam ;
 
 
     // Do not change with position and time
@@ -1646,7 +1653,7 @@ for ( i = 0 ; i < nc_row ; i++){
         fac_j = 0.3 ;
 
         // Calculate the Joule Heating Term now :: From here supply per unit time per unit volume of energy ( 2D :: VOl == AREA)
-        source_accu[i][j] = fac_j*(ele*ele * Ne[i][j] * In[i][j] * (neu_m + neu_c) )/(e0 * m_e * (w_l*w_l + (neu_m + neu_c)*(neu_m + neu_c)) ) ;
+        source_accu[i][j] = fac_j*(ele*ele * Ne[i][j] * In[i][j] * (neu_m + neu_c) )/(e0 * m_e * C * (w_l*w_l + (neu_m + neu_c)*(neu_m + neu_c)) ) ;
 
         // printf("Ne = %f \t In = %f" , Ne[i][j], In[i][j]);
         // source_accu[i][j] = 0.0e-16*fac_j*Ne[i][j]*In[i][j] ;
