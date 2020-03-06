@@ -35,7 +35,7 @@ for i in range(nc_row):
 xi,yi = np.meshgrid(cx,cy)
 
 # The Dual Pulse Laser :: SECOND PULSE
-w0 = 200.0e-6 
+w0 = 22.015e-6 
 lam = 1064.0e-9 
 f = 300.0e-3
 Rl_rn = 0.1*PI*(w0*w0) / lam    ## Scale Down the length in this direction
@@ -50,18 +50,35 @@ y_nor_i = (yi - ymid) / w0
 ## INTERPOLATION VALUES EXTRACT
 # Import The Files
 ## ---------------------------
+locate = "profiledata/"
 pre1 = 'I_Pulse2_'
 pre2 = 'Rho_e_'
 ext = '.txt'
+extfrom = '.csv'
 
+import csv
 ## LOOP for diffrent files
 for i in range(8):
 
+	
     index = i*5
     str_i = str(index)
 
-    fname1 = pre1+str_i
-    fname2 = pre2+str_i
+    fname1 = locate+pre1+str_i
+    fname2 = locate+pre2+str_i
+
+    with open(fname1+ext, "w") as my_output_file:
+        with open(fname1+extfrom, "r") as my_input_file:
+            [ my_output_file.write(" ".join(row)+'\n') for row in csv.reader(my_input_file)]
+        my_output_file.close()
+        my_input_file.close()
+
+    with open(fname2+ext, "w") as my_output_file:
+        with open(fname2+extfrom, "r") as my_input_file:
+            [ my_output_file.write(" ".join(row)+'\n') for row in csv.reader(my_input_file)]
+        my_output_file.close()
+        my_input_file.close()
+
 
     fout = 'out_'+str_i + ext
     # fout2 = 'out_'+fname2 + ext
@@ -74,9 +91,12 @@ for i in range(8):
 
     In_stack = np.vstack((np.flipud(In),In))
     Ne_stack = np.vstack((np.flipud(Ne),Ne))
+
+    print("\n max of In = %e"%np.max(In_stack))
+    print("\n max of Ne = %e"%np.max(Ne_stack))
     
-    In_stack = 1.0e4 * In_stack                 ## Intensity value scaled up
-    Ne_stack = 1.0e4 * Ne_stack                 ## Ne value scaled up
+    In_stack = 1.0 * In_stack                
+    Ne_stack = 1.0 * Ne_stack               
     
     R_r_stack = np.hstack((np.flipud(-R_r),R_r))
 
@@ -105,8 +125,10 @@ for i in range(8):
     result = np.vstack((V_i1, V_i2))
     np.savetxt(fout, result.T)
 
+    print("Interpolated %d files\n"% (2*(i+1)))
 
-    # FOR PLOTS __________________________________________________________________________________________
+
+    # # FOR PLOTS __________________________________________________________________________________________
     # twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
     # twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
 
