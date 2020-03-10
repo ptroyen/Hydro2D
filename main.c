@@ -30,12 +30,13 @@
 #define GAMMA 1.4
 #define c_v 0.718*1000
 // #define RHO 1.225 // Air
-#define RHO 1.2506 // Nitrogen
+// #define RHO 1.2506 // Nitrogen
+#define RHO 1.740
 
 
 // BASIC INITIALIZATION
-#define ncx 250
-#define ncy 250
+#define ncx 300
+#define ncy 300
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -52,7 +53,7 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=20 * mili ,lx = 80*mili,ly = 80.0*mili,CFL = 0.15;
+    double  l=8 * mili ,lx = 18.0 * mili,ly = 8.0 * mili,CFL = 0.15;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -83,7 +84,7 @@ int main(){
     // Time
     t0 = 0.0;
     // tend = 30.0 * micro ; // Laser tear shape
-    tend = 300.0 * micro ; // Laser tear shape
+    tend = 600 * micro ; // Laser tear shape
     //CFL NO.
     //CFL = 0.1;
 
@@ -355,38 +356,38 @@ if ( time < 40*nano){
 
         // WRITE DATA TO FILE
         if ( count == 1){
-           fp = fopen("testout2.txt", "w+");
+           fp = fopen("output/testout2.txt", "w+");
            //fprintf(fp,"Time =  %0.16f\n", time) ;
             // Centroid_X		Centroid_Y		Density		Velocity_U		Velocity_V		Pressure_P		Energy_E
            for (i=0; i < nc_row ; i++){
                 for (j=0; j < nc_col ; j++){
-                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
+                    fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
                             cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
                 }
            }
            fclose(fp);
         }
         if ( count%5 == 0 && count < 100 ){
-            sprintf(title, "add%d.txt", count);
+            sprintf(title, "output/add%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time) ;
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
-                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
+                    fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
                         cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
                 }
            }
            fclose(fp);
         }
 
-        if ( count % 50 == 0){
+        if ( count % 500 == 0){
             
-            sprintf(title, "%d.txt", count);
+            sprintf(title, "output/%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time);
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
-                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
+                    fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
                         cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
                 }
            }
@@ -400,11 +401,11 @@ if ( time < 40*nano){
 ///*******************************************************************************
 
     // FINAL TIMESTEP RESULTS WRITE ON FILE
-    fp = fopen("testout.txt", "w+");
+    fp = fopen("output/testout.txt", "w+");
     //fprintf(fp,"Time =  %0.16f\n", time) ;
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
-            fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
+            fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
                     cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
         }
    }
@@ -413,7 +414,7 @@ if ( time < 40*nano){
 
 
    //added energy total
-    fp = fopen("energy.txt", "w+");
+    fp = fopen("output/energy.txt", "w+");
     //fprintf(fp,"Time =  %0.16f\n", time) ;
     fprintf(fp,"Energy added = %0.7f \n",stored_energy);
   

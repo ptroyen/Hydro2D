@@ -144,24 +144,25 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
             }
 	    }
 
+        // dt = 1.0e-8; // FOR DMD DATA GENERATION
         // // Time Steps for first Initial Times
         // if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
         //     printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
 		// 	dt = 1e-3 * 1.0e-5;
 
-            //  if (n <= 500){
-            // printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			// dt = 1.0e-1 * 1.0e-8; }
+             if (n <= 100){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 1.0e-1 * 1.0e-9; }
 
-            // if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
-            // printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			// dt = 3.0e-8;
+            if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 1.0e-8;}
 
            
 
-		// }
+		
 
-         dt = 1.0e-9; // FOR DMD DATA GENERATION
+         
 
     }
 
@@ -901,8 +902,8 @@ double dxr, dxl, dyu, dyd ;
 
 
 // USE HLLC
-   HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
-   HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
+//    HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
+//    HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
 
 
@@ -912,8 +913,8 @@ double dxr, dxl, dyu, dyd ;
 
     /// Rusonov
 
-    // RSflux(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
-    // RSflux(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
+    RSflux(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
+    RSflux(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
 
 
@@ -1425,7 +1426,7 @@ void Source(int nc_row, int nc_col,double q[][nc_row][nc_col], double x[], doubl
 
 
     // The Dual Pulse Laser :: SECOND PULSE
-    w0 = 200.0e-6 ; lam = 1064.0e-9 ; f = 300.0e-3 ;
+    w0 = 22.015e-6 ; lam = 1064.0e-9 ; f = 300.0e-3 ;
     Rl_rn = PI*(w0*w0) / lam ;
 
 
@@ -1437,7 +1438,8 @@ void Source(int nc_row, int nc_col,double q[][nc_row][nc_col], double x[], doubl
     w_l = (C*2*PI)/lam ;
     C_log = 10.0 ;
     Tev = 1.0 ;
-    m_n = 4.65e-26 ; // kg mass of a nitrogen molecule
+    // m_n = 4.65e-26 ; // kg mass of a nitrogen molecule
+    m_n = 28.81032 * 1.0e-3 / 6.023e23    ;          // mass of a neutral molecue :: air
 
 
      //## Centroids
@@ -1629,8 +1631,8 @@ for ( i = 0 ; i < nc_row ; i++){
 
                 fscanf(fpini,"%lf \t %lf", &read1 , &read2);
                 // printf("%lf \t %lf i = %d , j = %d \n", read1 , read2, i , j);
-
-                In[i][j] = 1.0e2*read1 ; Ne[i][j] = read2 ;
+                // Changing the intensity scaling for heating
+                In[i][j] = read1 ; Ne[i][j] = 1.0e4*read2 ;
 
                 if (!(isfinite(In[i][j])) || !(isfinite(Ne[i][j]))){
 			 printf("**read not finite**");
