@@ -1,7 +1,7 @@
 # For LINUX
 
 CC = gcc
-CFLAGS = -Wall -g  #-Wl,--stack,1677721600000
+CFLAGS = -Wall -g -W -o0 #-Wl,--stack,1677721600000
 STACK = #-Wl,--stack,1677721600000
 LINK = -lm #Stack Size set
 

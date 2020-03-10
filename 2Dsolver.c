@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
+#include <string.h>
 #include "2Dsolver.h"
 
 void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v, double t[][nc_col]){
@@ -126,31 +128,33 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
             spc = sqrt(gamma*p[i][j]/r[i][j]);
-            if ( !(isfinite(spc)) ){spc = 0.0 ;}
-            mspc = sqrt(u[i][j]*u[i][j]+v[i][j]*v[i][j]) + spc ;
+            // if ( !(isfinite(spc)) ){spc = 0.0 ;}
+            // mspc = sqrt(u[i][j]*u[i][j]+v[i][j]*v[i][j]) + spc ;
             // Individual Wave Speed Calculation
-			//	mspcx = sqrt(u[i][j]*u[i][j]) + spc ;
-			//	mspcy = sqrt(v[i][j]*v[i][j]) + spc ;
+				mspcx = sqrt(u[i][j]*u[i][j]) + spc ;
+				mspcy = sqrt(v[i][j]*v[i][j]) + spc ;
 
-            dts = fmin((CFL*dx[j] / mspc),(CFL*dy[i]/ mspc));
+            dts = fmin((CFL*dx[j] / mspcx),(CFL*dy[i]/ mspcy));
 
             if ((isfinite(dts)) && dts > 0.0 ){
 			dt  = fmin( dts , dt);
             }
 	    }
 
+    }
+
         // Time Steps for first Initial Times
         if ( n <= 10){
-            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+            // printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
 			dt = 1.0e-5;
 		}
 
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-1 ){
-            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1.0e-5;
+        if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-2 ){
+            // printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 1.0e-3;
 		}
 
-    }
+    
 
 
     // Free the allocated memory for dx and dy
@@ -261,6 +265,11 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 
 
     QUSER = 2.0; // Select yourself
+
+    // If calculated pressure comes negative then limit to a small value.
+    // Might need to change in the energy equation so rather change the limiter
+    // if(PL<0.0){PL = 1.0e-6;}
+    // if(PR<0.0){PR = 1.0e-6;}
 
     CL = sqrt(GAMMA*PL/DL);
     CR = sqrt(GAMMA*PR/DR);
@@ -709,8 +718,8 @@ double dxr, dxl, dyu, dyd ;
             	}
 
 
-            	wx = (2.0*cflx[i][j] - copysign(1.0,cflx[i][j])) / 3;
-            	wy = (2.0*cfly[i][j] - copysign(1.0,cfly[i][j])) / 3;
+            	// wx = (2.0*cflx[i][j] - copysign(1.0,cflx[i][j])) / 3;
+            	// wy = (2.0*cfly[i][j] - copysign(1.0,cfly[i][j])) / 3;
 
             	//if ( fabs(cflx[i][j]) < 1e-5){ wx = 0.0 ; }
             //	if ( fabs(cfly[i][j]) < 1e-5){ wy = 0.0 ; }
@@ -808,16 +817,20 @@ double dxr, dxl, dyu, dyd ;
 				//            ## Slope Limiters Usagae
    // #----------------------------------------------------------------------------------
 
+        // Restrict the slop for energy equation because pressure is comming negative:: check only
+        
 
+                if ( ratiox<0.0){glx = 0.0 ; gry = 0.0 ;}else{
                 glx = (2*bmx*ratiox)/(1 - wx + (1+wx)*ratiox);
-                grx = (2*bmx)/(1 - wx + (1+wx)*ratiox);
-                sx[k][i][j] = sx[k][i][j] * vanAlbada(ratiox,glx,grx); //## Ref: Toro's Book 13.218 -- slope limiters ## superbee ## ultrabee ## This is the  delta
+                grx = (2*bmx)/(1 - wx + (1+wx)*ratiox);}
+                sx[k][i][j] = sx[k][i][j] * vanLeer(ratiox,glx,grx); //## Ref: Toro's Book 13.218 -- slope limiters ## superbee ## ultrabee ## This is the  delta
 
-
+                if(ratioy<0.0){gly = 0.0 ; gry = 0.0;}else{
                 gly = (2*bmy*ratioy)/(1 - wy + (1+wy)*ratioy);
-                gry = (2*bmy)/(1 - wy + (1+wy)*ratioy);
-                sy[k][i][j] = sy[k][i][j] * vanAlbada(ratioy,gly,gry);
+                gry = (2*bmy)/(1 - wy + (1+wy)*ratioy);}
+                sy[k][i][j] = sy[k][i][j] * vanLeer(ratioy,gly,gry);
 
+        //    if ( k==3){sx[k][i][j] = sx[k][i][j] * 0.4; sy[k][i][j] = sy[k][i][j]*0.4;}
 
 //## now calculate ul and ur
            qlx[k] = q[k][i][j] - 0.5*sx[k][i][j]; // ????
@@ -831,6 +844,9 @@ double dxr, dxl, dyu, dyd ;
 
          }
 
+
+// prmcalculate(real_cell_row , real_inter_col, qil,GAMMA , RL,UL,VL,PL,SPL);
+
 //    #----------------------------------------------------------------------------------
 //    ### up to here considered doing single equations at a time
 
@@ -843,9 +859,10 @@ double dxr, dxl, dyu, dyd ;
 
 
             for ( k = 0; k < 4 ; k++){
-            	// ## caclulate evolution of ulx and ury in dt/2
+            	// ## caclulate evolution of ulx and ury in dt/2 // MUSCL-HANCOCK
             	 HOLD = 0.5 * (dt/(x[j+1]-x[j])) * (xfql[k] - xfqr[k]) + 0.5 * (dt/(y[i+1]-y[i])) * (yfql[k] - yfqr[k]) ;
          //   HOLD = 0.5 * (dt/(x[j+1]-x[j])) * (xfql[k] - xfqr[k])  ;
+        //  HOLD = 0.0 ; // Simple MUSCL ONLY
 
             	qilx[k][i][j] = qlx[k] + HOLD ;
 				qirx[k][i][j] = qrx[k] + HOLD ;
@@ -864,6 +881,50 @@ double dxr, dxl, dyu, dyd ;
     }
 
 
+// PRESSURE POSITIVITY CHECK
+// prmcalculate(nc_row , nc_col, qilx,gamma,r,u,v,p,a);
+
+for (i = 1 ; i < nc_row-1 ; i++){
+    	for ( j = 1 ; j < nc_col-1 ; j++){
+    		// printf("\n%f , i,j;; %d, %d\n",qilx[0][i][j],i,j);
+    		      assert(p[i][j] > 0.0) ;
+                  assert(qilx[0][i][j] > 0.0) ;
+    	}
+    }
+
+// prmcalculate(nc_row , nc_col, qirx,gamma,r,u,v,p,a);
+
+for (i = 1 ; i < nc_row-1 ; i++){
+    	for ( j = 1 ; j < nc_col-1 ; j++){
+    		// printf("\n%f , i,j;; %d, %d\n",qilx[0][i][j],i,j);
+    		      assert(p[i][j] > 0.0) ;
+                  assert(qilx[0][i][j] > 0.0) ;
+    	}
+    }
+
+// prmcalculate(nc_row , nc_col, qily,gamma,r,u,v,p,a);
+
+for (i = 1 ; i < nc_row-1 ; i++){
+    	for ( j = 1 ; j < nc_col-1 ; j++){
+    		// printf("\n%f , i,j;; %d, %d\n",qilx[0][i][j],i,j);
+            //     printf("\n%f , i,j;; %d, %d\n",qilx[0][i][j],i,j);
+    		      assert(p[i][j] > 0.0) ;
+                  assert(qilx[0][i][j] > 0.0) ;
+    	}
+    }
+
+
+// prmcalculate(nc_row , nc_col, qiry,gamma,r,u,v,p,a);
+
+for (i = 1 ; i < nc_row-1 ; i++){
+    	for ( j = 1 ; j < nc_col-1 ; j++){
+    		// printf("\n%f , i,j;; %d, %d\n",qilx[0][i][j],i,j);
+    		      assert(p[i][j] > 0.0) ;
+                  assert(qilx[0][i][j] > 0.0) ;
+    	}
+    }
+       
+// PRESSURE CHECK END ------------------------
 
 
 //        #### LOOK BELOW THIS ................>>>>>>>
@@ -1032,6 +1093,8 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 				sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
 				sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
+                // assert(pL>0.0);
+                // assert(pR>0.0);
 
                 fil[0][m][n] = rL*uL;
 				fil[1][m][n] = rL*uL*uL+pL ;
@@ -1074,7 +1137,10 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
                           vr = VR[i][j] ;
                           pr = PR[i][j] ;
 
+                            assert(pl>0.0);
+                            assert(pr>0.0);
 
+                            // printf("\nX--IN ESTIM %d %d\n",i,j);
                           ESTIME(rl,ul,pl,rr,ur,pr,GAMMA , &SL, &SM, &SR) ;
 
 
@@ -1205,6 +1271,9 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
     	                sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
 
+                        assert(pL>0.0);
+                        assert(pR>0.0);
+
     	                fil[0][m][n] = rL*vL;
     					fil[1][m][n] = rL*vL*uL ;
     					fil[2][m][n] = rL*vL*vL +pL ;
@@ -1232,6 +1301,9 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
                                 n = j;
 
 
+                                
+
+
                                 rl = RL[i][j];
                                // # ul = uL[i][j];
                                // # vl = vL[i][j];
@@ -1248,6 +1320,11 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
                                 ur = VR[i][j];
                                 vr = UR[i][j];
 
+
+                                assert(pl>0.0);
+                                assert(pr>0.0);
+
+                                // printf("\nY--IN ESTIM %d %d\n",i,j);
                                 ESTIME(rl,ul,pl,rr,ur,pr,GAMMA,&SL, &SM, &SR);
 
 

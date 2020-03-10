@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <fenv.h>
 
 // Code Headers
 #include "2Dsolver.h"
@@ -33,8 +34,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 60
-#define ncy 60
+#define ncx 80
+#define ncy 80
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -42,6 +43,7 @@
 
 int main(){
 
+    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
     /*
     List of main variables used
     */
@@ -79,7 +81,7 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 0.17 ;
+    tend = 1.0 ;
     //CFL NO.
     //CFL = 0.1;
 
@@ -284,25 +286,25 @@ int main(){
 
 
 // FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
-// ----------------------------------- start
+// // ----------------------------------- start
 
-                   Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
-                  // Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
-                   for (i=0; i < nc_row ; i++){
-				            for (j=0; j < nc_col ; j++){
-					            for (k=0; k < 4 ; k++){
-                                 dudt[k][i][j] =  - accu_a[k][i][j] ;
-                                     if (k == 3){
-                                          dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
-                                         }
+//                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
+//                   // Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
+//                    for (i=0; i < nc_row ; i++){
+// 				            for (j=0; j < nc_col ; j++){
+// 					            for (k=0; k < 4 ; k++){
+//                                  dudt[k][i][j] =  - accu_a[k][i][j] ;
+//                                      if (k == 3){
+//                                           dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
+//                                          }
 
-                           // Integration in time here
-                           qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
+//                            // Integration in time here
+//                            qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
 
-						        }
-				            }
-                   }
-// -------------- END-TVD RK
+// 						        }
+// 				            }
+//                    }
+// // -------------- END-TVD RK
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
@@ -350,8 +352,8 @@ int main(){
            }
            fclose(fp);
         }
-        if ( count == 500){
-            fp = fopen("testout40.txt", "w+");
+        if ( count % 30 == 0){
+            fp = fopen("live.txt", "w+");
             // fprintf(fp,"Time =  %0.16f\n", time) ;
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){

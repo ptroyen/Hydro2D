@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pyplot
 
-final = 1
+final = 11
 
 if ( final == 1):
     X = np.loadtxt("testout.txt")[:, 0]
@@ -38,8 +38,8 @@ else:
 #     E = np.loadtxt("4200.txt")[:, 6]
 
     # i = 'initial' #4 * 700
-    # i = 'mid' #4 * 700
-    i = 'testout2' #4 * 700
+    i =  2*700
+    # i = 'testout2' #4 * 700
     fname = str(i)+'.txt'
 
 
