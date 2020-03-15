@@ -35,12 +35,19 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 300
-#define ncy 300
+#define ncx 200
+#define ncy 200
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
 #define nc_col ncx
+
+#define PI 3.14159265358979323846
+#define R0 8.134*1000
+#define MW_O2 32.0
+#define MW_N2 28.0134
+#define MW_M 0.8*MW_N2+0.2*MW_O2
+#define R R0/MW_M
 
 int main(){
 
@@ -53,7 +60,7 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=8 * mili ,lx = 18.0 * mili,ly = 8.0 * mili,CFL = 0.15;
+    double  l=8 * mili ,lx = 30.0 * mili,ly = 2.0 * mili,CFL = 0.15;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -192,6 +199,9 @@ int main(){
 					v[i][j] = v0[1];
 					r[i][j] = r0[1];
     			}
+
+                tempr[i][j] = p[i][j] / (r[i][j] * R ) ;
+
             }
     }
 
@@ -222,6 +232,10 @@ int main(){
     // [rho , rho*u , rho*v , E]
     concalculate(nc_row, nc_col,r,u,v,p,GAMMA,q);
     concalculate(nc_row, nc_col,r,u,v,p,GAMMA,qfinal);
+
+    // Changes Gamma as well with temperature
+    // thermo_concalculate(nc_row, nc_col,r,u,v,p,q);
+    // thermo_concalculate(nc_row, nc_col,r,u,v,p,qfinal);
 
         printf("CONSERVATIVE VARIABLES INITIALIZED\n");
 
@@ -367,7 +381,7 @@ if ( time < 40*nano){
            }
            fclose(fp);
         }
-        if ( count%5 == 0 && count < 100 ){
+        if ( count%10 == 0 && count < 200 ){
             sprintf(title, "output/add%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time) ;
@@ -380,7 +394,7 @@ if ( time < 40*nano){
            fclose(fp);
         }
 
-        if ( count % 500 == 0){
+        if ( count % 2000 == 0){
             
             sprintf(title, "output/%d.txt", count);
             fp = fopen(title, "w+");
@@ -394,7 +408,7 @@ if ( time < 40*nano){
            fclose(fp);
         }
 
-
+ 
     }
 
     /// INTEGRATION LOOP ENDS

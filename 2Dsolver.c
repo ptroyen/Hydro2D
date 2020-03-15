@@ -35,6 +35,7 @@ void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v,
 }
 
 
+
 void concalculate(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double gamma,double q[][nc_row][nc_col]){
     // assembles all properties in q, with conserved variables
 	int i,j;
@@ -44,7 +45,7 @@ void concalculate(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],
 				q[0][i][j] = r[i][j];
 				q[1][i][j] = u[i][j]*r[i][j];
 				q[2][i][j] = v[i][j]*r[i][j];
-				q[3][i][j] = (p[i][j]/(gamma - 1)) + 0.5 * r[i][j] * ( u[i][j]*u[i][j] + v[i][j]*v[i][j] );
+				q[3][i][j] = (p[i][j]/(gamma - 1)) + 0.5 * r[i][j] * ( u[i][j]*u[i][j] + v[i][j]*v[i][j] ); // change gamma with temperature
 			}
 		}
 	}
@@ -150,9 +151,9 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
         //     printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
 		// 	dt = 1e-3 * 1.0e-5;
 
-             if (n <= 100){
+             if (n <= 500){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1.0e-1 * 1.0e-9; }
+			dt = 1.0e-0 * 1.0e-9; }
 
             if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
@@ -179,7 +180,6 @@ void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma
                      double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double s[][nc_col]){
 
 	int i,j;
-
 	for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
 
@@ -440,7 +440,7 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     drey[i] = yre[i+1] - yre[i];
     }
 
-//## [][] supply row and column number to find the AREA in 2D of the mesh
+//## [][] supply row and column number to find the AREA in 2D of the mesh >>>>>>>>> USE FUNCTION
 //vol_re = numpy.matmul(drey[:,None],drex[None,:])
     for ( i = 0; i< nrec_row; i++ ){
     	for (j = 0; j < nrec_col; j++){
@@ -657,6 +657,8 @@ double dxr, dxl, dyu, dyd ;
 //    x = numpy.concatenate([gxl, xre, gxr])
 //    y = numpy.concatenate([gyd, yre, gyu])
 
+
+// >>>>>>>>>>>>>>>>>>>> USE FUNCTIONS
 //    ## assemble all props in q, with conserved variables
 	for (i=0;i< nc_row; i++){
 		for ( j = 0; j < nc_col; j++){
@@ -1054,7 +1056,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 				sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
 				sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
-
+                // USE FUNCTION
                 fil[0][m][n] = rL*uL;
 				fil[1][m][n] = rL*uL*uL+pL ;
 				fil[2][m][n] = rL*uL*vL ;
@@ -1226,7 +1228,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
     	                sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
     	                sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
-
+                        // USE FUNCTION
     	                fil[0][m][n] = rL*vL;
     					fil[1][m][n] = rL*vL*uL ;
     					fil[2][m][n] = rL*vL*vL +pL ;
@@ -2077,7 +2079,7 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 				sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
 				sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
-
+                // USE FUNCTION :: CHANGE
                 fil[0][m][n] = rL*uL;
 				fil[1][m][n] = rL*uL*uL+pL ;
 				fil[2][m][n] = rL*uL*vL ;
@@ -2094,8 +2096,6 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 				// Calculate Smax from Roes Average
 
 				 // Calculate Roe Averages
-
-
                 HL = ( qil[3][m][n] + pL ) / rL;
                 HR = ( qir[3][m][n] + pR ) / rR;
 
@@ -2103,7 +2103,7 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
                     u = (uL+RT*uR)/(1+RT);
                     v = (vL+RT*vR)/(1+RT);
                     H = ( HL+RT* HR)/(1+RT);
-                    a = sqrt( (GAMMA-1)*(H-(u*u+v*v)/2) );
+                    a = sqrt( (GAMMA-1)*(H-(u*u+v*v)/2) ); // GAMMA CHANGES FOR CALORICALLY IMPERFECT GAS
                     smax[m][n] = fabs(sqrt(u*u + v*v)) + a ;
 
 

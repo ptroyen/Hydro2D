@@ -38,7 +38,10 @@ xi,yi = np.meshgrid(cx,cy)
 w0 = 22.015e-6 
 lam = 1064.0e-9 
 f = 300.0e-3
-Rl_rn = 0.1*PI*(w0*w0) / lam    ## Scale Down the length in this direction
+Rl_rn = PI*(w0*w0) / lam    ## Scale Down the length in this direction
+
+print(Rl_rn*1000*30)
+print(w0*1000*40)
 
 xmid = cx[int(nc_col/2)]
 ymid = cy[int(nc_row/2)]
@@ -57,7 +60,10 @@ ext = '.txt'
 extfrom = '.csv'
 
 import csv
-## LOOP for diffrent files
+# plt.ion()
+# plt.show()
+    
+    ## LOOP for diffrent files
 for i in range(8):
 
 	
@@ -128,63 +134,65 @@ for i in range(8):
     print("Interpolated %d files\n"% (2*(i+1)))
 
 
-    # # FOR PLOTS __________________________________________________________________________________________
-    # twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
-    # twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
+    # FOR PLOTS __________________________________________________________________________________________
+    twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
+    twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
 
 
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("From Function -- Not-Normalized")
-    # #    ax.set_ylim(0.03,0.04)
-    # plt.show()
 
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("From Function -- Not-Normalized")
-    # # ax.set_zlim(0,np.max(Z)+2)
-    # plt.show()
+    
+    fig = plt.figure(0)
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    ax.set_title("From Function -- Not-Normalized")
+    #    ax.set_ylim(0.03,0.04)
+    plt.show()
 
-    # # Plot the 3D figure of the fitted function and the residuals.
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(x_nor_i,y_nor_i,twd_V1, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("From Function -- Normalized")
-    # # ax.set_zlim(0,np.max(Z)+2)
-    # plt.show()
+    fig = plt.figure(1)
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
+    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    ax.set_title("From Function -- Not-Normalized")
+    # ax.set_zlim(0,np.max(Z)+2)
+    plt.show()
 
-    # # Plot the 3D figure of the fitted function and the residuals.
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(x_nor_i,y_nor_i,twd_V2, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("From Function -- Normalized")
-    # # ax.set_zlim(0,np.max(Z)+2)
-    # plt.show()
+    # Plot the 3D figure of the fitted function and the residuals.
+    fig = plt.figure(2)
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(x_nor_i,y_nor_i,twd_V1, cmap='plasma')
+    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    ax.set_title("From Function -- Normalized")
+    # ax.set_zlim(0,np.max(Z)+2)
+    plt.show()
+
+    # Plot the 3D figure of the fitted function and the residuals.
+    fig = plt.figure(3)
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(x_nor_i,y_nor_i,twd_V2, cmap='plasma')
+    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    ax.set_title("From Function -- Normalized")
+    # ax.set_zlim(0,np.max(Z)+2)
+    plt.show()
 
 
-    # # Plot the 3D figure of the fitted function and the residuals.
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("Data: In")
-    # # ax.set_zlim(0,np.max(Z)+2)
-    # plt.show()
+    # Plot the 3D figure of the fitted function and the residuals.
+    fig = plt.figure(5)
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
+    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    ax.set_title("Data: In")
+    # ax.set_zlim(0,np.max(Z)+2)
+    plt.show()
 
-    # # Plot the 3D figure of the fitted function and the residuals.
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
-    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    # ax.set_title("Data : Ne")
-    # # ax.set_zlim(0,np.max(Z)+2)
-    # plt.show()
+    # Plot the 3D figure of the fitted function and the residuals.
+    fig = plt.figure(6)
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
+    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    ax.set_title("Data : Ne")
+    # ax.set_zlim(0,np.max(Z)+2)
+    plt.show()
 
 
 

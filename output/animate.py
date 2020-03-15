@@ -3,9 +3,22 @@ import matplotlib.pyplot as pyplot
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
+import argparse
 
-global i
 
+dstart = 500
+dend = 300000
+dincre = dstart
+
+parser = argparse.ArgumentParser(description='Process Animation Properties')
+
+parser.add_argument('start', metavar='S', type=int,default=dstart, help = 'Start Numerical Value of the Filename for Animation')
+parser.add_argument('end', metavar='E', type=int,default=dend, help = 'End Numerical Value of the Filename for Animation')
+parser.add_argument('incre', metavar='I', type=int,default=dincre, help = 'Stride in Numerical Value for Increment')
+parser.add_argument('add', metavar='A', type=int,default=0, help = 'Animate Initial Addition')
+
+
+inp = parser.parse_args()
 
 fparms = 'parameters.inp'
 nc_col,nc_row = np.loadtxt(fparms)[:]
@@ -22,8 +35,8 @@ n_row = nc_row + 1
 cx = np.zeros(nc_col)
 cy = np.zeros(nc_row)
 
-X = np.loadtxt("testout.txt")[:, 0]
-Y = np.loadtxt("testout.txt")[:, 1]
+X = np.loadtxt("testout2.txt")[:, 0]
+Y = np.loadtxt("testout2.txt")[:, 1]
 
 for j in range(nc_col):
     cx[j] = X[j]
@@ -37,25 +50,41 @@ v = np.zeros([nc_row,nc_col])
 p = np.zeros([nc_row,nc_col])
 e = np.zeros([nc_row,nc_col])
 s = np.zeros([nc_row,nc_col])
-k=20000
+
+limit = inp.end
+start = inp.start
+incre = inp.incre
+pref = inp.add
+
+
+
+
+k=start
 # fig, (ax1,ax2) = plt.subplots(1,2)
 
 
 
-plt.ion()
-plt.show()
+# plt.ion()
+# plt.show()
 
 # def animate(a):
-while k < 600000 :
+while k <= limit :
         fig = plt.figure(1)
         ax1 = fig.add_subplot(121)
         ax2 = fig.add_subplot(122)
 
         ax1.title.set_text('Density')
         ax2.title.set_text('Velocity_X')
+
+
         
         nam = str(k)
-        fname = nam+".txt"
+
+        if ( pref == 1):
+            fname = 'add'+nam+".txt"
+        else:
+            fname = nam+'.txt'
+
 
         print(fname)
 
@@ -116,15 +145,30 @@ while k < 600000 :
         cb2=pyplot.colorbar(p2,ax=ax2)
         # cb2.remove()
         pyplot.draw()
-        plt.pause(0.0001)
-        k = k+ 500
+        plt.pause(1.0)
+
+
+        k = k+ incre
 
         fig.clear()
         
 
         
+fig = plt.figure(2)
+ax1 = fig.add_subplot(121)
+ax2 = fig.add_subplot(122)
+
+ax1.title.set_text('Density')
+ax2.title.set_text('Velocity_X')
 
 
+ax1.contourf(cx,cy,r,160,cmap = 'RdGy')
+pyplot.colorbar(p1,ax=ax1)
+pyplot.show()
+
+ax2.contourf(cx,cy,u,80,cmap = 'RdGy')
+pyplot.colorbar(p2,ax=ax2)
+pyplot.show()
 
 # f = open(fname,'r')
 # lines = f.readlines()[1:]
