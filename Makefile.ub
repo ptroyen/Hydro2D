@@ -1,18 +1,28 @@
 # For LINUX
 
 CC = gcc
-CFLAGS = -Wall -g  #-Wl,--stack,1677721600000
+CFLAGS = -Wall -g  -o3 #-Wl,--stack,1677721600000
 STACK = #-Wl,--stack,1677721600000
 LINK = -lm #Stack Size set
 
 EXT = 
 
-DEPS = 2Dsolver.h gridgen.h
-OBJ = 2Dsolver.o gridgen.o main.o
+DEPS = 2Dsolver.h gridgen.h thermo.h
+OBJ = 2Dsolver.o gridgen.o thermo.o main.o
+
+OBJ_TEST = 2Dsolver.o gridgen.o thermo.o testmain.o
+
+OBJ_T = 2Dsolver.o gridgen.o thermo.o test.o
 
 #main: $(OBJ)
 #	$(CC) $(CFLAGS) -o main 2Dsolver.o main.o
 main: $(OBJ)
+	gcc $(CFLAGS) $(STACK) -o $@ $^ $(LINK)
+
+testmain: $(OBJ_TEST)
+	gcc $(CFLAGS) $(STACK) -o $@ $^ $(LINK)
+
+test: $(OBJ_T)
 	gcc $(CFLAGS) $(STACK) -o $@ $^ $(LINK)
 
 #main.o: main.c 2Dsolver.h

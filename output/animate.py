@@ -50,6 +50,7 @@ v = np.zeros([nc_row,nc_col])
 p = np.zeros([nc_row,nc_col])
 e = np.zeros([nc_row,nc_col])
 s = np.zeros([nc_row,nc_col])
+tempr = np.zeros([nc_row,nc_col])
 
 limit = inp.end
 start = inp.start
@@ -104,20 +105,20 @@ while k <= limit :
         # print(fname)
 
         R = np.loadtxt(fname)[:, 2]
-        U = np.loadtxt(fname)[:, 3]
+        # U = np.loadtxt(fname)[:, 3]
         # V = np.loadtxt(fname)[:, 4]
         # P = np.loadtxt(fname)[:, 5]
-        # E = np.loadtxt(fname)[:, 6]
+        T = np.loadtxt(fname)[:, 6]
 
 
 
         for i in range(nc_row):
             for j in range(nc_col):
                 r[i][j] = R[i*nc_col+j]
-                u[i][j] = U[i*nc_col+j]
+                # u[i][j] = U[i*nc_col+j]
                 # v[i][j] = V[i*nc_col+j]
                 # p[i][j] = P[i*nc_col+j]
-                # e[i][j] = E[i*nc_col+j]
+                tempr[i][j] = T[i*nc_col+j]
                 
 
         # mx,my = np.meshgrid(cx,cy)  
@@ -141,7 +142,7 @@ while k <= limit :
         # pyplot.legend()s
         ax2.clear()
         
-        p2 = ax2.contourf(cx,cy,u,80,cmap = 'RdGy')
+        p2 = ax2.contourf(cx,cy,tempr,80,cmap = 'RdGy')
         cb2=pyplot.colorbar(p2,ax=ax2)
         # cb2.remove()
         pyplot.draw()
@@ -155,18 +156,18 @@ while k <= limit :
 
         
 fig = plt.figure(2)
-ax1 = fig.add_subplot(121)
-ax2 = fig.add_subplot(122)
+# ax1 = fig.add_subplot(12)
+# ax2 = fig.add_subplot(122)
 
 ax1.title.set_text('Density')
-ax2.title.set_text('Velocity_X')
+# ax2.title.set_text('Velocity_X')
 
 
-ax1.contourf(cx,cy,r,160,cmap = 'RdGy')
+pyplot.contour(cx,cy,r,130,cmap = 'RdGy')
 pyplot.colorbar(p1,ax=ax1)
-pyplot.show()
+# pyplot.show()
 
-ax2.contourf(cx,cy,u,80,cmap = 'RdGy')
+ax2.contourf(cx,cy,tempr,80,cmap = 'RdGy')
 pyplot.colorbar(p2,ax=ax2)
 pyplot.show()
 

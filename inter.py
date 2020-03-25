@@ -63,8 +63,32 @@ import csv
 # plt.ion()
 # plt.show()
     
+
+xmid_off = cx[int(nc_col/2)]
     ## LOOP for diffrent files
 for i in range(8):
+
+    # if ( i < 3):
+    #     offset = -(i/3.0) * 2.0e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
+    #     xmid = cx[int(nc_col/2)] - offset
+    #     ymid = cy[int(nc_row/2)]
+
+    # if (i>1 and i < 6 ):
+    #     offset = ((i+1)/6.0) *2* 0.25e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
+    #     xmid_off = cx[int(nc_col/2)] - offset
+    #     offset = ((i+1)/6.0) *2* 1.25e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
+    #     xmid = cx[int(nc_col/2)] - offset
+    #     ymid = cy[int(nc_row/2)]
+        
+
+    
+    #normalized one
+    x_nor_i = (xi-xmid) / Rl_rn
+    y_nor_i = (yi - ymid) / w0
+
+    x_nor_i_off = (xi-xmid_off) / Rl_rn
+
+    
 
 	
     index = i*5
@@ -119,11 +143,14 @@ for i in range(8):
 
     points_i = np.vstack((x_nor_i.ravel(), y_nor_i.ravel()))
     points_i = points_i.T
+
+    points_i_off = np.vstack((x_nor_i_off.ravel(), y_nor_i.ravel()))
+    points_i_off = points_i_off.T
     
 
     # # interpolate
     V_i1 = griddata(points,val1,points_i,method='linear',fill_value=np.min(In_stack))
-    V_i2 = griddata(points,val2,points_i,method='linear',fill_value=np.min(Ne_stack))
+    V_i2 = griddata(points,val2,points_i_off,method='linear',fill_value=np.min(Ne_stack)) # only electron no.density changes focal point
 
     # Save the Values in a file to be used by Hydro2D
     
@@ -134,65 +161,65 @@ for i in range(8):
     print("Interpolated %d files\n"% (2*(i+1)))
 
 
-    # FOR PLOTS __________________________________________________________________________________________
-    twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
-    twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
+    # # FOR PLOTS __________________________________________________________________________________________
+    # twd_V1 = np.reshape(V_i1,(nc_row,nc_col))
+    # twd_V2 = np.reshape(V_i2,(nc_row,nc_col))
 
 
 
     
-    fig = plt.figure(0)
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
-    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    ax.set_title("From Function -- Not-Normalized")
-    #    ax.set_ylim(0.03,0.04)
-    plt.show()
+    # fig = plt.figure(0)
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(xi,yi,twd_V1, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("From Function -- Not-Normalized")
+    # #    ax.set_ylim(0.03,0.04)
+    # plt.show()
 
-    fig = plt.figure(1)
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
-    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    ax.set_title("From Function -- Not-Normalized")
-    # ax.set_zlim(0,np.max(Z)+2)
-    plt.show()
+    # fig = plt.figure(1)
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(xi,yi,twd_V2, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("From Function -- Not-Normalized")
+    # # ax.set_zlim(0,np.max(Z)+2)
+    # plt.show()
 
-    # Plot the 3D figure of the fitted function and the residuals.
-    fig = plt.figure(2)
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(x_nor_i,y_nor_i,twd_V1, cmap='plasma')
-    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    ax.set_title("From Function -- Normalized")
-    # ax.set_zlim(0,np.max(Z)+2)
-    plt.show()
+    # # Plot the 3D figure of the fitted function and the residuals.
+    # fig = plt.figure(2)
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(x_nor_i,y_nor_i,twd_V1, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("From Function -- Normalized")
+    # # ax.set_zlim(0,np.max(Z)+2)
+    # plt.show()
 
-    # Plot the 3D figure of the fitted function and the residuals.
-    fig = plt.figure(3)
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(x_nor_i,y_nor_i,twd_V2, cmap='plasma')
-    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    ax.set_title("From Function -- Normalized")
-    # ax.set_zlim(0,np.max(Z)+2)
-    plt.show()
+    # # Plot the 3D figure of the fitted function and the residuals.
+    # fig = plt.figure(3)
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(x_nor_i,y_nor_i,twd_V2, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("From Function -- Normalized")
+    # # ax.set_zlim(0,np.max(Z)+2)
+    # plt.show()
 
 
-    # Plot the 3D figure of the fitted function and the residuals.
-    fig = plt.figure(5)
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
-    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    ax.set_title("Data: In")
-    # ax.set_zlim(0,np.max(Z)+2)
-    plt.show()
+    # # Plot the 3D figure of the fitted function and the residuals.
+    # fig = plt.figure(5)
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(X_r,Y_r,V_r1, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("Data: In")
+    # # ax.set_zlim(0,np.max(Z)+2)
+    # plt.show()
 
-    # Plot the 3D figure of the fitted function and the residuals.
-    fig = plt.figure(6)
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
-    # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
-    ax.set_title("Data : Ne")
-    # ax.set_zlim(0,np.max(Z)+2)
-    plt.show()
+    # # Plot the 3D figure of the fitted function and the residuals.
+    # fig = plt.figure(6)
+    # ax = fig.gca(projection='3d')
+    # ax.plot_surface(X_r,Y_r,V_r2, cmap='plasma')
+    # # cset = ax.contourf(X, Y, Z-fit, zdir='z', offset=-4.0e12, cmap='plasma')
+    # ax.set_title("Data : Ne")
+    # # ax.set_zlim(0,np.max(Z)+2)
+    # plt.show()
 
 
 

@@ -28,19 +28,22 @@ if ( loc == 1):
     U = np.loadtxt("testout.txt")[:, 3]
     V = np.loadtxt("testout.txt")[:, 4]
     P = np.loadtxt("testout.txt")[:, 5]
-    E = np.loadtxt("testout.txt")[:, 6]
+    T = np.loadtxt("testout.txt")[:, 6]
 elif(loc == -1):
     fname = 'testout2.txt'
     R = np.loadtxt(fname)[:, 2]
     U = np.loadtxt(fname)[:, 3]
     V = np.loadtxt(fname)[:, 4]
     P = np.loadtxt(fname)[:, 5]
-    E = np.loadtxt(fname)[:, 6]
+    T = np.loadtxt(fname)[:, 6]
 elif(loc == 2):
     with open(fname, 'r') as fin:
         data = fin.read().splitlines(True)
     with open(fnameout, 'w') as fout:
         fout.writelines(data[1:])
+
+    Time = data[0]
+    print(Time)
 
  
     
@@ -49,7 +52,7 @@ elif(loc == 2):
     U = np.loadtxt(fnameout)[:, 3]
     V = np.loadtxt(fnameout)[:, 4]
     P = np.loadtxt(fnameout)[:, 5]
-    E = np.loadtxt(fnameout)[:, 6]
+    T = np.loadtxt(fnameout)[:, 6]
 
 else:
     with open('add'+fname, 'r') as fin:
@@ -57,11 +60,15 @@ else:
     with open(fnameout, 'w') as fout:
         fout.writelines(data[1:])
 
+    Time = data[0]
+    print(Time)
+
+
     R = np.loadtxt(fnameout)[:, 2]
     U = np.loadtxt(fnameout)[:, 3]
     V = np.loadtxt(fnameout)[:, 4]
     P = np.loadtxt(fnameout)[:, 5]
-    E = np.loadtxt(fnameout)[:, 6]
+    T = np.loadtxt(fnameout)[:, 6]
 
     # X = np.loadtxt("initial.txt")[:, 0]
     # Y = np.loadtxt("initial.txt")[:, 1]
@@ -102,8 +109,7 @@ else:
 ## COL 4
 ## ROW 3
 
-Time = data[0]
-print(Time)
+
     
 fparms = 'parameters.inp'
 nc_col,nc_row = np.loadtxt(fparms)[:]
@@ -134,7 +140,7 @@ r = np.zeros([nc_row,nc_col])
 u = np.zeros([nc_row,nc_col])
 v = np.zeros([nc_row,nc_col])
 p = np.zeros([nc_row,nc_col])
-e = np.zeros([nc_row,nc_col])
+tempr = np.zeros([nc_row,nc_col])
 s = np.zeros([nc_row,nc_col])
 S = np.sqrt(U*U + V*V) ## caclulate speed as well
 
@@ -150,7 +156,7 @@ for i in range(nc_row):
         u[i][j] = U[i*nc_col+j]
         v[i][j] = V[i*nc_col+j]
         p[i][j] = P[i*nc_col+j]
-        e[i][j] = E[i*nc_col+j]
+        tempr[i][j] = T[i*nc_col+j]
         s[i][j] = S[i*nc_col+j]
         
     
@@ -180,9 +186,9 @@ mx,my = np.meshgrid(cx,cy)
 # pyplot.show()
 
 
-levels = np.linspace(250000,260000,200)
+# levels = np.linspace(250000,260000,200)
 pyplot.figure(100)
-pyplot.contourf(cx,cy,e,levels = levels,cmap = 'plasma')
+pyplot.contourf(cx,cy,tempr,160,cmap = 'RdGy')
 pyplot.colorbar()
 # pyplot.legend()
 pyplot.title("spc_energy")

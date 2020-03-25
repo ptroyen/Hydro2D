@@ -10,9 +10,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
+
 #include "2Dsolver.h"
 
 #define PI 3.14159265358979323846
+
+#define PI 3.14159265358979323846
+#define R0 8.314*1000
+#define MW_O2 32.0
+#define MW_N2 28.0134
+#define MW_M (0.8*MW_N2+0.2*MW_O2)
+#define R (R0/MW_M)
 
 void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v, double t[][nc_col]){
 /*
@@ -103,7 +112,7 @@ double vanAlbada(double r,double gl,double gr){
 
 
 double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],
-                    double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n){
+                    double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n,double time){
 //     provides dt required to maintain the provided CFL
 //     n is number of time steps
 
@@ -119,6 +128,8 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	// double dx[nc_col], dy[nc_row], dt;
 	double dt , spc , mspc , dts , mspcx, mspcy;
 
+    double tempr ;
+
 	for (i=0; i< nc_col ; i ++){
 		dx[i] = x[i+1]-x[i];
 	}
@@ -131,7 +142,15 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 
 	for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
+
+
             spc = sqrt(gamma*p[i][j]/r[i][j]);
+            tempr = p[i][j]/(r[i][j]*R) ;
+
+            // assert(tempr < 20000.0) ;
+
+
+
             if ( !(isfinite(spc)) ){spc = 0.0 ;}
             mspc = sqrt(u[i][j]*u[i][j]+v[i][j]*v[i][j]) + spc ;
             // Individual Wave Speed Calculation
@@ -154,8 +173,10 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
              if (n <= 500){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
 			dt = 1.0e-0 * 1.0e-9; }
-
-            if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
+            else if (time > 4.0e-4  ){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 5.0e-8;}
+            else if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
 			dt = 1.0e-8;}
 
@@ -261,6 +282,8 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 
 
     QUSER = 2.0; //##<<<<<<<<<<<< Select yourself
+
+    // Recalculate new GAMMA with average temperature from L and R
 
     CL = sqrt(GAMMA*PL/DL);
     CR = sqrt(GAMMA*PR/DR);
@@ -1634,7 +1657,7 @@ for ( i = 0 ; i < nc_row ; i++){
                 fscanf(fpini,"%lf \t %lf", &read1 , &read2);
                 // printf("%lf \t %lf i = %d , j = %d \n", read1 , read2, i , j);
                 // Changing the intensity scaling for heating
-                In[i][j] = read1 ; Ne[i][j] = 1.0e4*read2 ;
+                In[i][j] = read1 ; Ne[i][j] = 5.0e3*read2 ;
 
                 if (!(isfinite(In[i][j])) || !(isfinite(Ne[i][j]))){
 			 printf("**read not finite**");

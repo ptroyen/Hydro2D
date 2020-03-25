@@ -4,7 +4,7 @@
  Author      : Sagar Pokharel
  Version     :
  Copyright   :
- Description : 2D Euler Solver with Energy Addition
+ Description : testmain.c
  ============================================================================
  */
 
@@ -16,8 +16,8 @@
 
 // Code Headers
 #include "2Dsolver.h"
-#include "gridgen.h"
 #include "thermo.h"
+#include "gridgen.h"
 
 
 // UNIVERSAL CONSTANTS
@@ -37,8 +37,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 200
-#define ncy 200
+#define ncx 100
+#define ncy 100
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -48,12 +48,15 @@
 #define R0 8.314*1000
 #define MW_O2 32.0
 #define MW_N2 28.0134
-#define MW_M (0.8*MW_N2+0.2*MW_O2)
+#define MW_M (0.80*MW_N2+0.20*MW_O2)
 #define R (R0/MW_M)
 
 int main(){
 
     feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+
+    // printf("R0 = %f , R = %f\n" , R0 , R);
+
 
     /*
     List of main variables used
@@ -64,7 +67,7 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=8 * mili ,lx = 30.0 * mili,ly = 30.0 * mili,CFL = 0.15;
+    double  l=8 * mili ,lx = 30.0 * mili,ly = 10.0 * mili,CFL = 0.15;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
@@ -234,12 +237,12 @@ int main(){
 
     // CALCULATE CONSERVATIVE VARIABLES FOR THE EQUATIONS TO SOLVE :
     // [rho , rho*u , rho*v , E]
-    concalculate(nc_row, nc_col,r,u,v,p,GAMMA,q);
-    concalculate(nc_row, nc_col,r,u,v,p,GAMMA,qfinal);
+    // concalculate(nc_row, nc_col,r,u,v,p,GAMMA,q);
+    // concalculate(nc_row, nc_col,r,u,v,p,GAMMA,qfinal);
 
     // Changes Gamma as well with temperature
-    // thermo_concalculate(nc_row, nc_col,r,u,v,p,q);
-    // thermo_concalculate(nc_row, nc_col,r,u,v,p,qfinal);
+    thermo_concalculate(nc_row, nc_col,r,u,v,p,q);
+    thermo_concalculate(nc_row, nc_col,r,u,v,p,qfinal);
 
         printf("CONSERVATIVE VARIABLES INITIALIZED\n");
 
@@ -249,7 +252,7 @@ int main(){
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
                 fprintf(fpini,"%lf		%lf		%lf		%lf		%lf		%lf		%lf \n"
-                        ,cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
+                        ,cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
         }
     }
         printf("INITIAL VARIABLES WRITTEN ON initial.txt\n");
@@ -265,8 +268,9 @@ stored_energy = 0.0 ;
     while (time < tend) {
 
         // calculate the timestep
-        dt = CFLmaintain(nc_row, nc_col, r,u,v,p,GAMMA,CFL,x,y,count,time);
-        // dt = thermo_CFLmaintain(nc_row, nc_col, r,u,v,p,CFL,x,y,count);
+        // dt = CFLmaintain(nc_row, nc_col, r,u,v,p,GAMMA,CFL,x,y,count);
+        dt = thermo_CFLmaintain(nc_row, nc_col, r,u,v,p,CFL,x,y,count);
+
         if (time+dt > tend ){ dt = tend - time ; }
 
         // Set DUDT to zero before integration
@@ -284,6 +288,7 @@ stored_energy = 0.0 ;
     // Store on accu_a
         Flux_M(nc_row, nc_col, q,x,y,dt,GAMMA, accu_a);
         // thermo_Flux_M(nc_row, nc_col, q,p,x,y,dt,GAMMA, accu_a);
+        
 
     // Source Flux Calculate
     // store on source_accu : only for energy equation , see source_accu initialization
@@ -298,7 +303,7 @@ stored_energy = 0.0 ;
         for (i=0; i < nc_row ; i++){
             for (j=0; j < nc_col ; j++){
                 for (k=0; k < 4 ; k++){
-                    dudt[k][i][j] =  - accu_a[k][i][j] - source_geom[k][i][j];
+                    dudt[k][i][j] =  - accu_a[k][i][j] ;//- source_geom[k][i][j];
                         if (k == 3){
                             dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add diffusive flux
                         }
@@ -310,6 +315,7 @@ stored_energy = 0.0 ;
 
 // FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
 // ----------------------------------- start
+
                     // thermo_prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,tempr,speed);
 
                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
@@ -345,9 +351,8 @@ if ( time < 40*nano){
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
+
         // thermo_prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,tempr,speed);
-
-
 
 		// CHECK IF Values are negative HERE
 
@@ -358,7 +363,6 @@ if ( time < 40*nano){
                     for (k=0; k < 4 ; k++){
                             q[k][i][j] = qfinal[k][i][j] ;
                     }
-                       tempr[i][j] =  (p[i][j]/(r[i][j] * R)) ;
                 }
         }
 
@@ -376,7 +380,7 @@ if ( time < 40*nano){
 		printf("%lf		%lf		%0.10f		%0.10f		%0.10f		%0.10f		%0.10f \n",
                 cx[(int)(nc_col/2)],cy[(int)(nc_row/2)],r[(int)(nc_row/2)][(int)(nc_col/2)],
                 u[(int)(nc_row/2)][(int)(nc_col/2)],v[(int)(nc_row/2)][(int)(nc_col/2)],
-                p[(int)(nc_row/2)][(int)(nc_col/2)],tempr[(int)(nc_row/2)][(int)(nc_col/2)]);
+                p[(int)(nc_row/2)][(int)(nc_col/2)],q[3][(int)(nc_row/2)][(int)(nc_col/2)]);
 
 
         // WRITE DATA TO FILE
@@ -387,25 +391,25 @@ if ( time < 40*nano){
            for (i=0; i < nc_row ; i++){
                 for (j=0; j < nc_col ; j++){
                     fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
-                            cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
+                            cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
                 }
            }
            fclose(fp);
         }
-        if ( count%10 == 0 && time < 45.0e-9 ){
+        if ( count%10 == 0 && count < 200 ){
             sprintf(title, "output/add%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time) ;
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
                     fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
-                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
+                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
                 }
            }
            fclose(fp);
         }
 
-        if ( count % 500 == 0){
+        if ( count % 2000 == 0){
             
             sprintf(title, "output/%d.txt", count);
             fp = fopen(title, "w+");
@@ -413,7 +417,7 @@ if ( time < 40*nano){
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
                     fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
-                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
+                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
                 }
            }
            fclose(fp);
@@ -431,7 +435,7 @@ if ( time < 40*nano){
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
             fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
-                    cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
+                    cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
         }
    }
    fclose(fp);

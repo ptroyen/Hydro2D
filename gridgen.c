@@ -70,8 +70,23 @@ void grid(int IMAX , int JMAX ,double XL, double XR, double YL, double YU, doubl
             fprintf(fp,"%0.7f \t %0.7f\n",x[i],y[j]);
         }
    }
+
+
    fclose(fp);
 
-   
+   // save nc_x and nc_col to file
+        fpar = fopen("output/parameters.inp", "w+");
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
+            fprintf(fpar,"%d \n%d\n",IMAX-1,JMAX-1);
+            fclose(fpar);
+
+    fp = fopen("output/mesh.txt", "w+");
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
+    for (j=0; j < JMAX ; j++){
+        for (i=0; i < IMAX ; i++){
+            fprintf(fp,"%0.7f \t %0.7f\n",x[i],y[j]);
+        }
+   }
+fclose(fp);
 
 } 
