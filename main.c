@@ -38,7 +38,7 @@
 
 // BASIC INITIALIZATION
 #define ncx 200
-#define ncy 200
+#define ncy 300
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -333,7 +333,7 @@ stored_energy = 0.0 ;
 
 
 // Sum of energy added
-if ( time < 40*nano){
+if ( time < 40.0*nano){
  for (i=0; i < nc_row ; i++){
                 for (j=0; j < nc_col ; j++){
                     for (k=0; k < 4 ; k++){
@@ -392,7 +392,7 @@ if ( time < 40*nano){
            }
            fclose(fp);
         }
-        if ( count%10 == 0 && time < 45.0e-9 ){
+        if ( count%5 == 0 && time < 45.0e-9 ){
             sprintf(title, "output/add%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time) ;

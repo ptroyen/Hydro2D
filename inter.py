@@ -73,12 +73,12 @@ for i in range(8):
     #     xmid = cx[int(nc_col/2)] - offset
     #     ymid = cy[int(nc_row/2)]
 
-    # if (i>1 and i < 6 ):
-    #     offset = ((i+1)/6.0) *2* 0.25e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
-    #     xmid_off = cx[int(nc_col/2)] - offset
-    #     offset = ((i+1)/6.0) *2* 1.25e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
-    #     xmid = cx[int(nc_col/2)] - offset
-    #     ymid = cy[int(nc_row/2)]
+    if (i>1 and i < 6 ):
+        offset = ((i+1)/6.0) *2* 0.25e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
+        xmid_off = cx[int(nc_col/2)] - offset
+        offset = ((i+1)/6.0) *2* 1.25e-3  # 1mm displacement total in 8 profile plus the offset that was already pressent
+        xmid = cx[int(nc_col/2)] - offset
+        ymid = cy[int(nc_row/2)]
         
 
     

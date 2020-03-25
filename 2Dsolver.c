@@ -387,8 +387,8 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     nc_col = nrec_col + 4 ;
 
 // Including ghost cell interfaces
-    nx = nre_row + 4 ;
-    ny = nre_col + 4 ;
+    nx = nre_col + 4 ;
+    ny = nre_row + 4 ;
 
 
      //// double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
@@ -478,6 +478,17 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     	}
     }
 
+    for ( i = 0; i< nc_row; i++ ){
+    	for (j = 0; j < nc_col; j++){
+		r[i][j] = 0.0;
+		u[i][j] = 0.0;
+		v[i][j] = 0.0;
+		p[i][j] = 0.0;
+		E[i][j] = 0.0;
+		a[i][j] = 0.0;
+    		
+    	}
+    }
 
 
 
@@ -603,14 +614,14 @@ p[0][0] = p[0][3];  p[0][1] = p[0][2];
 p[1][0] = p[1][3];  p[1][1] = p[1][2];
 
 // // LEFT TOP
-u[nc_col-1][0] = u[nc_col-1][3];        u[nc_col-1][1] = u[nc_col-1][2];
-u[nc_col-2][0] = u[nc_col-2][3];    u[nc_col-2][1] = u[nc_col-2][2];
-v[nc_col-1][0] = v[nc_col-1][3];        v[nc_col-1][1] = v[nc_col-1][2];
-v[nc_col-2][0] = v[nc_col-2][3];    v[nc_col-2][1] = v[nc_col-2][2];
-r[nc_col-1][0] = r[nc_col-1][3];        r[nc_col-1][1] = r[nc_col-1][2];
-r[nc_col-2][0] = r[nc_col-2][3];    r[nc_col-2][1] = r[nc_col-2][2];
-p[nc_col-1][0] = p[nc_col-1][3];        p[nc_col-1][1] = p[nc_col-1][2];
-p[nc_col-2][0] = p[nc_col-2][3];    p[nc_col-2][1] = p[nc_col-2][2];
+u[nc_row-1][0] = u[nc_row-1][3];        u[nc_row-1][1] = u[nc_row-1][2];
+u[nc_row-2][0] = u[nc_row-2][3];    u[nc_row-2][1] = u[nc_row-2][2];
+v[nc_row-1][0] = v[nc_row-1][3];        v[nc_row-1][1] = v[nc_row-1][2];
+v[nc_row-2][0] = v[nc_row-2][3];    v[nc_row-2][1] = v[nc_row-2][2];
+r[nc_row-1][0] = r[nc_row-1][3];        r[nc_row-1][1] = r[nc_row-1][2];
+r[nc_row-2][0] = r[nc_row-2][3];    r[nc_row-2][1] = r[nc_row-2][2];
+p[nc_row-1][0] = p[nc_row-1][3];        p[nc_row-1][1] = p[nc_row-1][2];
+p[nc_row-2][0] = p[nc_row-2][3];    p[nc_row-2][1] = p[nc_row-2][2];
 
 // RIGHT BOTTOM
 u[0][nc_col-1] = u[0][nc_col-4];  u[0][nc_col-2] = u[0][nc_col-3];
@@ -624,14 +635,14 @@ p[1][nc_col-1] = p[1][nc_col-4];  p[1][nc_col-2] = p[1][nc_col-3];
 
 
 // RIGHT TOP
-u[nc_col-1][nc_col-1] = u[nc_col-1][nc_col-4];  u[nc_col-1][nc_col-2] = u[nc_col-1][nc_col-3];
-u[nc_col-2][nc_col-1] = u[nc_col-2][nc_col-4];  u[nc_col-2][nc_col-2] = u[nc_col-2][nc_col-3];
-v[nc_col-1][nc_col-1] = v[nc_col-1][nc_col-4];  v[nc_col-1][nc_col-2] = v[nc_col-1][nc_col-3];
-v[nc_col-2][nc_col-1] = v[nc_col-2][nc_col-4];  v[nc_col-2][nc_col-2] = v[nc_col-2][nc_col-3];
-r[nc_col-1][nc_col-1] = r[nc_col-1][nc_col-4];  r[nc_col-1][nc_col-2] = r[nc_col-1][nc_col-3];
-r[nc_col-2][nc_col-1] = r[nc_col-2][nc_col-4];  r[nc_col-2][nc_col-2] = p[nc_col-2][nc_col-3];
-p[nc_col-1][nc_col-1] = p[nc_col-1][nc_col-4];  p[nc_col-1][nc_col-2] = p[nc_col-1][nc_col-3];
-p[nc_col-2][nc_col-1] = p[nc_col-2][nc_col-4];  p[nc_col-2][nc_col-2] = p[nc_col-2][nc_col-3];
+u[nc_row-1][nc_col-1] = u[nc_row-1][nc_col-4];  u[nc_row-1][nc_col-2] = u[nc_row-1][nc_col-3];
+u[nc_row-2][nc_col-1] = u[nc_row-2][nc_col-4];  u[nc_row-2][nc_col-2] = u[nc_row - 2][nc_col-3];
+v[nc_row - 1][nc_col-1] = v[nc_row - 1][nc_col-4];  v[nc_row - 1][nc_col-2] = v[nc_row - 1][nc_col-3];
+v[nc_row - 2][nc_col-1] = v[nc_row - 2][nc_col-4];  v[nc_row - 2][nc_col-2] = v[nc_row - 2][nc_col-3];
+r[nc_row - 1][nc_col-1] = r[nc_row - 1][nc_col-4];  r[nc_row - 1][nc_col-2] = r[nc_row - 1][nc_col-3];
+r[nc_row - 2][nc_col-1] = r[nc_row - 2][nc_col-4];  r[nc_row - 2][nc_col-2] = p[nc_row - 2][nc_col-3];
+p[nc_row - 1][nc_col-1] = p[nc_row - 1][nc_col-4];  p[nc_row - 1][nc_col-2] = p[nc_row - 1][nc_col-3];
+p[nc_row - 2][nc_col-1] = p[nc_row - 2][nc_col-4];  p[nc_row - 2][nc_col-2] = p[nc_row - 2][nc_col-3];
 
 //#   ghor = [ure[:][-2],ure[:][-1]] ## reflective
 //#     ghol = [ure[:][1],ure[:][0]] ## transmissive
