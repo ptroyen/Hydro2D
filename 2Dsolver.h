@@ -11,7 +11,7 @@ double vanLeer(double r,double gl,double gr);
 
 double vanAlbada(double r,double gl,double gr);
 
-double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n);
+double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n,double time);
 
 void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double s[][nc_col]);
 

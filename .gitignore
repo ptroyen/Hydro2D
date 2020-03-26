@@ -1,0 +1,13 @@
+*.com
+*.dll
+*.exe
+*.o
+
+*.log
+*.core
+
+
+output/*.txt
+output/*.inp
+output/1/
+results/

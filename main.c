@@ -12,10 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <fenv.h>
 
 // Code Headers
 #include "2Dsolver.h"
 #include "gridgen.h"
+#include "thermo.h"
 
 
 // UNIVERSAL CONSTANTS
@@ -29,18 +31,29 @@
 // SPECIFIC CONSTANTS
 #define GAMMA 1.4
 #define c_v 0.718*1000
-#define RHO 1.225
+// #define RHO 1.225 // Air
+// #define RHO 1.2506 // Nitrogen
+#define RHO 1.1740
 
 
 // BASIC INITIALIZATION
-#define ncx 200
-#define ncy 200
+#define ncx 20
+#define ncy 30
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
 #define nc_col ncx
 
+#define PI 3.14159265358979323846
+#define R0 8.314*1000
+#define MW_O2 32.0
+#define MW_N2 28.0134
+#define MW_M (0.8*MW_N2+0.2*MW_O2)
+#define R (R0/MW_M)
+
 int main(){
+
+    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
     /*
     List of main variables used
@@ -51,13 +64,16 @@ int main(){
     // const int nx = ncx+1,ny= ncy+1,nc_row = ncy,nc_col = ncx;
     // NDIM = 0 Cartesian, 1 Cylindrical, 2 Spherical
     int NDIM = 0 ;
-    double  l=20 * mili ,lx = l,ly = l,CFL = 0.25;
+    double  l=8 * mili ,lx = 30.0 * mili,ly = 30.0 * mili,CFL = 0.15;
     static double  t0, time, tend , dt;
     int i, j , k ;
 
     // Initial Conditions Storage Variables
     // LEFT and RIGHT States
     static double  p0[2], u0[2], v0[2], r0[2] ;
+
+    double stored_energy ;
+    char title[16];
 
     static int count = 0 ;
     FILE *fp , *fpini;
@@ -78,7 +94,8 @@ int main(){
 
     // Time
     t0 = 0.0;
-    tend = 30.0 * micro ;
+    // tend = 30.0 * micro ; // Laser tear shape
+    tend = 600 * micro ; // Laser tear shape
     //CFL NO.
     //CFL = 0.1;
 
@@ -186,6 +203,9 @@ int main(){
 					v[i][j] = v0[1];
 					r[i][j] = r0[1];
     			}
+
+                tempr[i][j] = p[i][j] / (r[i][j] * R ) ;
+
             }
     }
 
@@ -217,6 +237,10 @@ int main(){
     concalculate(nc_row, nc_col,r,u,v,p,GAMMA,q);
     concalculate(nc_row, nc_col,r,u,v,p,GAMMA,qfinal);
 
+    // Changes Gamma as well with temperature
+    // thermo_concalculate(nc_row, nc_col,r,u,v,p,q);
+    // thermo_concalculate(nc_row, nc_col,r,u,v,p,qfinal);
+
         printf("CONSERVATIVE VARIABLES INITIALIZED\n");
 
 
@@ -225,23 +249,26 @@ int main(){
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
                 fprintf(fpini,"%lf		%lf		%lf		%lf		%lf		%lf		%lf \n"
-                        ,cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+                        ,cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
         }
     }
         printf("INITIAL VARIABLES WRITTEN ON initial.txt\n");
+
+    fclose(fpini);
 
 
 
     time = t0;
 
-
+stored_energy = 0.0 ;
 ///*******************************************************************
     /// INTEGRATION LOOP STARTS
 
     while (time < tend) {
 
         // calculate the timestep
-        dt = CFLmaintain(nc_row, nc_col, r,u,v,p,GAMMA,CFL,x,y,count);
+        dt = CFLmaintain(nc_row, nc_col, r,u,v,p,GAMMA,CFL,x,y,count,time);
+        // dt = thermo_CFLmaintain(nc_row, nc_col, r,u,v,p,CFL,x,y,count);
         if (time+dt > tend ){ dt = tend - time ; }
 
         // Set DUDT to zero before integration
@@ -258,6 +285,7 @@ int main(){
     // Convective Flux Calculation del(F)/del(V) = DUDT
     // Store on accu_a
         Flux_M(nc_row, nc_col, q,x,y,dt,GAMMA, accu_a);
+        // thermo_Flux_M(nc_row, nc_col, q,p,x,y,dt,GAMMA, accu_a);
 
     // Source Flux Calculate
     // store on source_accu : only for energy equation , see source_accu initialization
@@ -265,7 +293,7 @@ int main(){
 
        // void Geom_F(int nc_row, int nc_col,double q[4][nc_row][nc_col],double gamma,int NDIM, double x[], double y[], double source_geom[4][nc_row][nc_col]){
  
-        Geom_F(nc_row, nc_col,q,GAMMA,NDIM,x,y,source_geom);
+        // Geom_F(nc_row, nc_col,q,GAMMA,NDIM,x,y,source_geom);
 
 
     // Now Integrate the equation
@@ -282,29 +310,45 @@ int main(){
         }
 
 
-//// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
-//// ----------------------------------- start
-//
-//                    Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
-//                    Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
-//                    for (i=0; i < nc_row ; i++){
-//				            for (j=0; j < nc_col ; j++){
-//					            for (k=0; k < 4 ; k++){
-//                                  dudt[k][i][j] =  - accu_a[k][i][j] ;
-//                                      if (k == 3){
-//                                           dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
-//                                          }
-//
-//                            // Integration in time here
-//                            qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
-//
-//						        }
-//				            }
-//                    }
-//// -------------- END-TVD RK
+// FOR TVD RK, USE THIS PART ELSE FOR EULER COMMENT IT
+// ----------------------------------- start
+                    // thermo_prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,tempr,speed);
+
+                   Flux_M(nc_row, nc_col, qfinal,x,y,dt,GAMMA, accu_a);
+                //    thermo_Flux_M(nc_row, nc_col, qfinal,p,x,y,dt,GAMMA, accu_a);
+                   Source(nc_row, nc_col, qfinal, x, y, time,dt, c_v, source_accu );
+                   for (i=0; i < nc_row ; i++){
+				            for (j=0; j < nc_col ; j++){
+					            for (k=0; k < 4 ; k++){
+                                 dudt[k][i][j] =  - accu_a[k][i][j] ;
+                                     if (k == 3){
+                                          dudt[3][i][j] = dudt[3][i][j] + source_accu[i][j] ; // + add difussive flux
+                                         }
+
+                           // Integration in time here
+                           qfinal[k][i][j] = 0.5 * ( q[k][i][j] +  dt * dudt[k][i][j]) + 0.5 * qfinal[k][i][j] ;
+
+						        }
+				            }
+                   }
+// -------------- END-TVD RK
+
+
+// Sum of energy added
+if ( time < 40.0*nano){
+ for (i=0; i < nc_row ; i++){
+                for (j=0; j < nc_col ; j++){
+                    for (k=0; k < 4 ; k++){
+                            stored_energy = stored_energy+ qfinal[3][i][j] - q[3][i][j] ;
+                    }
+                }
+        }
+}
 
         // CALCULATE UPDATED VALUE AFTER THE TIME STEP
 		prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,speed);
+        // thermo_prmcalculate(nc_row, nc_col, qfinal,GAMMA,r,u,v,p,tempr,speed);
+
 
 
 		// CHECK IF Values are negative HERE
@@ -316,6 +360,7 @@ int main(){
                     for (k=0; k < 4 ; k++){
                             q[k][i][j] = qfinal[k][i][j] ;
                     }
+                       tempr[i][j] =  (p[i][j]/(r[i][j] * R)) ;
                 }
         }
 
@@ -333,66 +378,73 @@ int main(){
 		printf("%lf		%lf		%0.10f		%0.10f		%0.10f		%0.10f		%0.10f \n",
                 cx[(int)(nc_col/2)],cy[(int)(nc_row/2)],r[(int)(nc_row/2)][(int)(nc_col/2)],
                 u[(int)(nc_row/2)][(int)(nc_col/2)],v[(int)(nc_row/2)][(int)(nc_col/2)],
-                p[(int)(nc_row/2)][(int)(nc_col/2)],q[3][(int)(nc_row/2)][(int)(nc_col/2)]);
+                p[(int)(nc_row/2)][(int)(nc_col/2)],tempr[(int)(nc_row/2)][(int)(nc_col/2)]);
 
 
         // WRITE DATA TO FILE
         if ( count == 1){
-           fp = fopen("testout2.txt", "w+");
+           fp = fopen("output/testout2.txt", "w+");
            //fprintf(fp,"Time =  %0.16f\n", time) ;
             // Centroid_X		Centroid_Y		Density		Velocity_U		Velocity_V		Pressure_P		Energy_E
            for (i=0; i < nc_row ; i++){
                 for (j=0; j < nc_col ; j++){
-                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
-                            cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+                    fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
+                            cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
                 }
            }
            fclose(fp);
         }
-        if ( count == 500){
-            fp = fopen("testout40.txt", "w+");
+        if ( count%5 == 0 && time < 45.0e-9 ){
+            sprintf(title, "output/add%d.txt", count);
+            fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time) ;
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
-                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
-                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+                    fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
+                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
                 }
            }
            fclose(fp);
         }
 
-
-
-
-        if ( count % 700 == 0){
-            char title[16];
-            sprintf(title, "%d.txt", count);
+        if ( count % 500 == 0){
+            
+            sprintf(title, "output/%d.txt", count);
             fp = fopen(title, "w+");
             fprintf(fp,"Time =  %0.16f\n", time);
             for (i=0; i < nc_row ; i++){
    				for (j=0; j < nc_col ; j++){
-                    fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
-                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+                    fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
+                        cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
                 }
            }
            fclose(fp);
         }
 
-
+ 
     }
 
     /// INTEGRATION LOOP ENDS
 ///*******************************************************************************
 
     // FINAL TIMESTEP RESULTS WRITE ON FILE
-    fp = fopen("testout.txt", "w+");
+    fp = fopen("output/testout.txt", "w+");
     //fprintf(fp,"Time =  %0.16f\n", time) ;
     for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
-            fprintf(fp,"%0.7f   %0.7f   %0.10f  %0.10f  %0.10f  %0.10f  %0.10f\n",
-                    cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],q[3][i][j]);
+            fprintf(fp,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
+                    cx[j],cy[i],r[i][j],u[i][j],v[i][j],p[i][j],tempr[i][j]);
         }
    }
+   fclose(fp);
+
+
+
+   //added energy total
+    fp = fopen("output/energy.txt", "w+");
+    //fprintf(fp,"Time =  %0.16f\n", time) ;
+    fprintf(fp,"Energy added = %0.7f \n",stored_energy);
+  
    fclose(fp);
 
     return 0;

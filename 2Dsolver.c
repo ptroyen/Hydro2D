@@ -7,11 +7,21 @@
  Description : 2D Euler Solver with Energy Addition
  ============================================================================
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
+
 #include "2Dsolver.h"
+
+#define PI 3.14159265358979323846
+
+#define PI 3.14159265358979323846
+#define R0 8.314*1000
+#define MW_O2 32.0
+#define MW_N2 28.0134
+#define MW_M (0.8*MW_N2+0.2*MW_O2)
+#define R (R0/MW_M)
 
 void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v, double t[][nc_col]){
 /*
@@ -34,6 +44,7 @@ void temperature(int nc_row , int nc_col, double q[][nc_row][nc_col],double c_v,
 }
 
 
+
 void concalculate(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double gamma,double q[][nc_row][nc_col]){
     // assembles all properties in q, with conserved variables
 	int i,j;
@@ -43,7 +54,7 @@ void concalculate(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],
 				q[0][i][j] = r[i][j];
 				q[1][i][j] = u[i][j]*r[i][j];
 				q[2][i][j] = v[i][j]*r[i][j];
-				q[3][i][j] = (p[i][j]/(gamma - 1)) + 0.5 * r[i][j] * ( u[i][j]*u[i][j] + v[i][j]*v[i][j] );
+				q[3][i][j] = (p[i][j]/(gamma - 1)) + 0.5 * r[i][j] * ( u[i][j]*u[i][j] + v[i][j]*v[i][j] ); // change gamma with temperature
 			}
 		}
 	}
@@ -101,7 +112,7 @@ double vanAlbada(double r,double gl,double gr){
 
 
 double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col],double v[][nc_col],
-                    double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n){
+                    double p[][nc_col],double gamma,double CFL,double x[nc_col+1],double y[nc_row+1],int n,double time){
 //     provides dt required to maintain the provided CFL
 //     n is number of time steps
 
@@ -117,6 +128,8 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 	// double dx[nc_col], dy[nc_row], dt;
 	double dt , spc , mspc , dts , mspcx, mspcy;
 
+    double tempr ;
+
 	for (i=0; i< nc_col ; i ++){
 		dx[i] = x[i+1]-x[i];
 	}
@@ -129,7 +142,15 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
 
 	for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
+
+
             spc = sqrt(gamma*p[i][j]/r[i][j]);
+            tempr = p[i][j]/(r[i][j]*R) ;
+
+            // assert(tempr < 20000.0) ;
+
+
+
             if ( !(isfinite(spc)) ){spc = 0.0 ;}
             mspc = sqrt(u[i][j]*u[i][j]+v[i][j]*v[i][j]) + spc ;
             // Individual Wave Speed Calculation
@@ -143,11 +164,27 @@ double CFLmaintain(int nc_row, int nc_col, double r[][nc_col],double u[][nc_col]
             }
 	    }
 
-        // Time Steps for first Initial Times
-        if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
+        // dt = 1.0e-8; // FOR DMD DATA GENERATION
+        // // Time Steps for first Initial Times
+        // if (dt<=0.0 || !(isfinite(dt)) || dt > 0.1*1.0e-5 || n <= 5){
+        //     printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+		// 	dt = 1e-3 * 1.0e-5;
+
+             if (n <= 500){
             printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
-			dt = 1e-3 * 1.0e-5;
-		}
+			dt = 1.0e-0 * 1.0e-9; }
+            else if (time > 4.0e-4  ){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 5.0e-8;}
+            else if (dt<=0.0 || !(isfinite(dt)) || dt > 1.0e-7 ){
+            printf("TIME STEP CALCULATED = %0.12e  \n" , dt);
+			dt = 1.0e-8;}
+
+           
+
+		
+
+         
 
     }
 
@@ -164,7 +201,6 @@ void prmcalculate(int nc_row, int nc_col,double q[][nc_row][nc_col],double gamma
                      double r[][nc_col],double u[][nc_col],double v[][nc_col],double p[][nc_col],double s[][nc_col]){
 
 	int i,j;
-
 	for (i=0; i < nc_row ; i++){
         for (j=0; j < nc_col ; j++){
 
@@ -246,6 +282,8 @@ void ESTIME(double DL,double UL,double PL,double DR,double UR,double PR,double G
 
 
     QUSER = 2.0; //##<<<<<<<<<<<< Select yourself
+
+    // Recalculate new GAMMA with average temperature from L and R
 
     CL = sqrt(GAMMA*PL/DL);
     CR = sqrt(GAMMA*PR/DR);
@@ -349,15 +387,15 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     nc_col = nrec_col + 4 ;
 
 // Including ghost cell interfaces
-    nx = nre_row + 4 ;
-    ny = nre_col + 4 ;
+    nx = nre_col + 4 ;
+    ny = nre_row + 4 ;
 
 
      //// double (*a)[y][z] = malloc(sizeof(double[x][y][z])) , (*b)[y][z] = malloc(sizeof(double[x][y][z])),
     //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
     //	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
 
-
+    FILE *fpchk ;
 
     // Real cells
     // flux and accumulation initialization
@@ -425,7 +463,7 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     drey[i] = yre[i+1] - yre[i];
     }
 
-//## [][] supply row and column number to find the AREA in 2D of the mesh
+//## [][] supply row and column number to find the AREA in 2D of the mesh >>>>>>>>> USE FUNCTION
 //vol_re = numpy.matmul(drey[:,None],drex[None,:])
     for ( i = 0; i< nrec_row; i++ ){
     	for (j = 0; j < nrec_col; j++){
@@ -440,6 +478,17 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     	}
     }
 
+    for ( i = 0; i< nc_row; i++ ){
+    	for (j = 0; j < nc_col; j++){
+		r[i][j] = 0.0;
+		u[i][j] = 0.0;
+		v[i][j] = 0.0;
+		p[i][j] = 0.0;
+		E[i][j] = 0.0;
+		a[i][j] = 0.0;
+    		
+    	}
+    }
 
 
 
@@ -565,14 +614,14 @@ p[0][0] = p[0][3];  p[0][1] = p[0][2];
 p[1][0] = p[1][3];  p[1][1] = p[1][2];
 
 // // LEFT TOP
-u[nc_col-1][0] = u[nc_col-1][3];        u[nc_col-1][1] = u[nc_col-1][2];
-u[nc_col-2][0] = u[nc_col-2][3];    u[nc_col-2][1] = u[nc_col-2][2];
-v[nc_col-1][0] = v[nc_col-1][3];        v[nc_col-1][1] = v[nc_col-1][2];
-v[nc_col-2][0] = v[nc_col-2][3];    v[nc_col-2][1] = v[nc_col-2][2];
-r[nc_col-1][0] = r[nc_col-1][3];        r[nc_col-1][1] = r[nc_col-1][2];
-r[nc_col-2][0] = r[nc_col-2][3];    r[nc_col-2][1] = r[nc_col-2][2];
-p[nc_col-1][0] = p[nc_col-1][3];        p[nc_col-1][1] = p[nc_col-1][2];
-p[nc_col-2][0] = p[nc_col-2][3];    p[nc_col-2][1] = p[nc_col-2][2];
+u[nc_row-1][0] = u[nc_row-1][3];        u[nc_row-1][1] = u[nc_row-1][2];
+u[nc_row-2][0] = u[nc_row-2][3];    u[nc_row-2][1] = u[nc_row-2][2];
+v[nc_row-1][0] = v[nc_row-1][3];        v[nc_row-1][1] = v[nc_row-1][2];
+v[nc_row-2][0] = v[nc_row-2][3];    v[nc_row-2][1] = v[nc_row-2][2];
+r[nc_row-1][0] = r[nc_row-1][3];        r[nc_row-1][1] = r[nc_row-1][2];
+r[nc_row-2][0] = r[nc_row-2][3];    r[nc_row-2][1] = r[nc_row-2][2];
+p[nc_row-1][0] = p[nc_row-1][3];        p[nc_row-1][1] = p[nc_row-1][2];
+p[nc_row-2][0] = p[nc_row-2][3];    p[nc_row-2][1] = p[nc_row-2][2];
 
 // RIGHT BOTTOM
 u[0][nc_col-1] = u[0][nc_col-4];  u[0][nc_col-2] = u[0][nc_col-3];
@@ -586,14 +635,14 @@ p[1][nc_col-1] = p[1][nc_col-4];  p[1][nc_col-2] = p[1][nc_col-3];
 
 
 // RIGHT TOP
-u[nc_col-1][nc_col-1] = u[nc_col-1][nc_col-4];  u[nc_col-1][nc_col-2] = u[nc_col-1][nc_col-3];
-u[nc_col-2][nc_col-1] = u[nc_col-2][nc_col-4];  u[nc_col-2][nc_col-2] = u[nc_col-2][nc_col-3];
-v[nc_col-1][nc_col-1] = v[nc_col-1][nc_col-4];  v[nc_col-1][nc_col-2] = v[nc_col-1][nc_col-3];
-v[nc_col-2][nc_col-1] = v[nc_col-2][nc_col-4];  v[nc_col-2][nc_col-2] = v[nc_col-2][nc_col-3];
-r[nc_col-1][nc_col-1] = r[nc_col-1][nc_col-4];  r[nc_col-1][nc_col-2] = r[nc_col-1][nc_col-3];
-r[nc_col-2][nc_col-1] = r[nc_col-2][nc_col-4];  r[nc_col-2][nc_col-2] = p[nc_col-2][nc_col-3];
-p[nc_col-1][nc_col-1] = p[nc_col-1][nc_col-4];  p[nc_col-1][nc_col-2] = p[nc_col-1][nc_col-3];
-p[nc_col-2][nc_col-1] = p[nc_col-2][nc_col-4];  p[nc_col-2][nc_col-2] = p[nc_col-2][nc_col-3];
+u[nc_row-1][nc_col-1] = u[nc_row-1][nc_col-4];  u[nc_row-1][nc_col-2] = u[nc_row-1][nc_col-3];
+u[nc_row-2][nc_col-1] = u[nc_row-2][nc_col-4];  u[nc_row-2][nc_col-2] = u[nc_row - 2][nc_col-3];
+v[nc_row - 1][nc_col-1] = v[nc_row - 1][nc_col-4];  v[nc_row - 1][nc_col-2] = v[nc_row - 1][nc_col-3];
+v[nc_row - 2][nc_col-1] = v[nc_row - 2][nc_col-4];  v[nc_row - 2][nc_col-2] = v[nc_row - 2][nc_col-3];
+r[nc_row - 1][nc_col-1] = r[nc_row - 1][nc_col-4];  r[nc_row - 1][nc_col-2] = r[nc_row - 1][nc_col-3];
+r[nc_row - 2][nc_col-1] = r[nc_row - 2][nc_col-4];  r[nc_row - 2][nc_col-2] = r[nc_row - 2][nc_col-3];
+p[nc_row - 1][nc_col-1] = p[nc_row - 1][nc_col-4];  p[nc_row - 1][nc_col-2] = p[nc_row - 1][nc_col-3];
+p[nc_row - 2][nc_col-1] = p[nc_row - 2][nc_col-4];  p[nc_row - 2][nc_col-2] = p[nc_row - 2][nc_col-3];
 
 //#   ghor = [ure[:][-2],ure[:][-1]] ## reflective
 //#     ghol = [ure[:][1],ure[:][0]] ## transmissive
@@ -642,6 +691,8 @@ double dxr, dxl, dyu, dyd ;
 //    x = numpy.concatenate([gxl, xre, gxr])
 //    y = numpy.concatenate([gyd, yre, gyu])
 
+
+// >>>>>>>>>>>>>>>>>>>> USE FUNCTIONS
 //    ## assemble all props in q, with conserved variables
 	for (i=0;i< nc_row; i++){
 		for ( j = 0; j < nc_col; j++){
@@ -674,6 +725,7 @@ double dxr, dxl, dyu, dyd ;
     	creq_y[i] = dt / (dys[i]);
 
     }
+
 
 
 
@@ -885,8 +937,24 @@ double dxr, dxl, dyu, dyd ;
 // void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
 
 
+// Save Properties/ flux r and l with ghost cells as well // Try tecplot format
 
-/// USE HLLC
+
+           fpchk = fopen("output/check.txt", "w+");
+           fprintf(fpchk,"Check the flux and properties\n") ;
+           
+           for (i=0; i < nc_row ; i++){
+                for (j=0; j < nc_col ; j++){
+                    fprintf(fpchk,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
+                            centroid_x[j],centroid_y[i],r[i][j],u[i][j],v[i][j],p[i][j],qilx[3][i][j],qirx[3][i][j],qily[3][i][j],qiry[3][i][j]);
+                }
+           }
+           fclose(fpchk);
+
+           scanf("%d",&i);
+
+
+// USE HLLC
 //    HLLC(nc_row, nc_col, qilx,qirx,gamma,'x', nrec_row , nre_col,xflux);
 //    HLLC(nc_row, nc_col ,qily,qiry,gamma,'y', nre_row, nrec_col,yflux);
 
@@ -1039,7 +1107,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 				sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
 				sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
-
+                // USE FUNCTION
                 fil[0][m][n] = rL*uL;
 				fil[1][m][n] = rL*uL*uL+pL ;
 				fil[2][m][n] = rL*uL*vL ;
@@ -1211,7 +1279,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
     	                sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
     	                sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
-
+                        // USE FUNCTION
     	                fil[0][m][n] = rL*vL;
     					fil[1][m][n] = rL*vL*uL ;
     					fil[2][m][n] = rL*vL*vL +pL ;
@@ -1345,7 +1413,7 @@ void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][
 //void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
 
 
-void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]){
+void Source(int nc_row, int nc_col,double q[][nc_row][nc_col], double x[], double y[], double t,double dt, double c_v, double source_accu[nc_row][nc_col]){
  /*   '''
 ---------------------------------------------------------------------------------------
  >>>>>>>>>>>           ### d/dt()dv = S dv ###          <<<<<<<<<<<<<<<
@@ -1378,8 +1446,53 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
      (*centroid_x)=malloc(sizeof(double[nc_col])) , (*centroid_y)=malloc(sizeof(double[nc_row])) , vol;
 	 
 	 double che , midx , midy , fac_tear;
+
+
+    // LASER PROPERTIES DEFINITIONS
+    double w0, lam , Rl_rn, f ;
+
+
+    // Other Values required ffor Joule Heating
+
+    double ele , neu_m , neu_c , e0 , m_e ,m_n, w_l , C ,Tev , C_log;
+
+    double fac_j , Nm , s_val;
+    double read1 , read2 ;
+
+
+    // Create two arrays to store read intensity profiles
+    double (*In)[nc_col]=malloc(sizeof(double[nc_row][nc_col])),
+             (*Ne)[nc_col]=malloc(sizeof(double[nc_row][nc_col]));
+           //  (*Nm)[nc_col]=malloc(sizeof(double[nc_row][nc_col])) ;
+    
+
+    FILE *fpini ;
+    int flag ;
+
+
+
+    // Use structure to define the gauss function paratmeters
+    // struct par_gauss gaus1 , gaus2 , gaus3 , gaus4 ;
+    // double A , sigmax , sigmay ; 
 //    source_accu = numpy.zeros([nc_row,nc_col])
 
+
+
+    // The Dual Pulse Laser :: SECOND PULSE
+    w0 = 22.015e-6 ; lam = 1064.0e-9 ; f = 300.0e-3 ;
+    Rl_rn = PI*(w0*w0) / lam ;
+
+
+    // Do not change with position and time
+    C = 299792458.0 ;
+    e0 = 8.85418782e-12 ;
+    m_e = 9.10938356e-31 ; // mass of e
+    ele = 1.60217662e-19 ; // charge of e
+    w_l = (C*2*PI)/lam ;
+    C_log = 10.0 ;
+    Tev = 1.0 ;
+    // m_n = 4.65e-26 ; // kg mass of a nitrogen molecule
+    m_n = 28.81032 * 1.0e-3 / 6.023e23    ;          // mass of a neutral molecue :: air
 
 
      //## Centroids
@@ -1465,18 +1578,19 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 	midy = centroid_y[(int)(nc_row/2)];
 
 
+// At Center
+        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
+        // printf("\nVOL = %lf\n", vol);
     
+            
+flag = 1;
+    if (t<1*5.0e-9){
 
-    if (t==0.0){
-
-        for ( i = 0 ; i < nc_row ; i++){
-            for( j = 0 ; j< nc_col ; j++){
+         fpini = fopen("out_0.txt", "r");
         // source_accu[0,0] = 0.851072 / dt ## 0.244816/dt
 
-/// AT CENTER --------------------------------------------------
-        // At Center
-        vol = drex[(int)(nc_col/2)] * drey[(int)(nc_row/2)]; // <-- this should change with variable divisions in grid
-        printf("\nVOL = %lf\n", vol);
+        // AT CENTER --------------------------------------------------
+        
         // source_accu[int(nc_row/2),int(nc_col/2)] = 1.0*0.244816/(dt*vol) ## 0.851072 / dt ## 0.244816/dt
        // source_accu[(int)(nc_row/2)][(int)(nc_col/2)] = 1.0*0.311357/(dt*vol) ; // 0.851072 / dt ## 0.244816/dt
 
@@ -1500,46 +1614,131 @@ void Source(int nc_row, int nc_col,double q[4][nc_row][nc_col], double x[], doub
 
 /// TEAR DROP WITH MIDDLE CIRCULAR SHAPE -------------------------------------
 
-// Tear Shape
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
-            vol = drex[j] * drey[i];
-            if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
+// // Tear Shape
+//             che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.75*1.0e-3-centroid_y[i]+midy),3)*(1.75*1.0e-3+centroid_y[i]-midy);
+//             vol = drex[j] * drey[i];
+//             if (che <= 0.0){source_accu[i][j] = 8.0* 1.0e-3 /(dt*vol) ;}
 
 
 
-            fac_tear = 20000.0;
-            //more intense one as well one also tear shaped
-            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
-//
-//
-//            fac_tear = 100000.0;
-//            //more intense one as well, also tear shaped
-//            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
-//            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
+//             fac_tear = 20000.0;
+//             //more intense one as well one also tear shaped
+//             che = pow((centroid_x[j] - midx),2) - fac_tear*pow((1.2*1.0e-3-centroid_y[i]+midy-0.25*1.0e-3),3)*(1.2*1.0e-3+centroid_y[i]-midy+0.25*1.0e-3);
+//             if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 16* 1.0e-3 /(dt*vol) ;}
+// //
+// //
+// //            fac_tear = 100000.0;
+// //            //more intense one as well, also tear shaped
+// //            che = pow((centroid_x[j] - midx),2) - fac_tear*pow((0.75*1.0e-3-centroid_y[i]+midy-0.75*1.0e-3),3)*(0.5*1.0e-3+centroid_y[i]-midy+0.75*1.0e-3);
+// //            if (che <= 0.0){source_accu[i][j] =source_accu[i][j] + 20* 1.0e-3 /(dt*vol) ;}
 
 
-             /////// Circle at the middle lobe of tear
-            che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
-            if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+//              /////// Circle at the middle lobe of tear
+//             che = pow((centroid_x[j] - midx),2) + pow((centroid_y[i]-midy+0.85*1.0e-3),2) - pow(0.55*1.0e-3/2,2) ;
+//             if (che <= 0.0){source_accu[i][j] =source_accu[i][j]+ 35* 1.0e-3 /(dt*vol) ;}
+// TEAR SHAPE ENDS ---------------------------------------------------------------------------------------------
+
+ 
+}else if (t<2.0*5.0e-9){
+
+        fpini = fopen("out_5.txt", "r");
+ 
+}else if (t<3.0*5.0e-9){
+    fpini = fopen("out_10.txt", "r");
+
+}else if (t<4.0*5.0e-9){
+
+    fpini = fopen("out_15.txt", "r");
+
+}else if (t<5.0*5.0e-9){
 
 
-                    }
-                }
+    fpini = fopen("out_20.txt", "r");
+
+   
+}else if (t<6.0*5.0e-9){
+
+
+        fpini = fopen("out_25.txt", "r");
+
+}else if (t<7.0*5.0e-9){
+
+
+        fpini = fopen("out_30.txt", "r");
+ 
+}else if (t<8.0*5.0e-9){
+
+    fpini = fopen("out_35.txt", "r");
+
+}else {flag = 0;}
+
+
+printf("Source ON = %d\n" , flag);
+
+
+if ( flag !=0){
+// Load interpolated data file to array :: selected by time
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+
+                fscanf(fpini,"%lf \t %lf", &read1 , &read2);
+                // printf("%lf \t %lf i = %d , j = %d \n", read1 , read2, i , j);
+                // Changing the intensity scaling for heating
+                In[i][j] = read1 ; Ne[i][j] = 5.0e3*read2 ;
+
+                if (!(isfinite(In[i][j])) || !(isfinite(Ne[i][j]))){
+			 printf("**read not finite**");
             }
+    
+    }
+}
+fclose(fpini);
 
-         printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+
+
+
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+
+        Nm = q[0][i][j] / m_n ; // Neutrals number density
+        neu_c = 2.91e-12 * Ne[i][j] * pow(Tev,-3/2)*C_log ; // Need to fit the electron number density as well.
+        neu_m = 3.91e-14 * Nm * pow(Tev,1/2) ;
+        fac_j = 0.3 ;
+
+        // Calculate the Joule Heating Term now :: From here supply per unit time per unit volume of energy ( 2D :: VOl == AREA)
+        source_accu[i][j] = fac_j*(ele*ele * Ne[i][j] * In[i][j] * (neu_m + neu_c) )/(e0 * m_e * C * (w_l*w_l + (neu_m + neu_c)*(neu_m + neu_c)) ) ;
+
+        // printf("Ne = %f \t In = %f" , Ne[i][j], In[i][j]);
+        // source_accu[i][j] = 0.0e-16*fac_j*Ne[i][j]*In[i][j] ;
+        // source_accu[i][j] = 0.0;
+    if (!(isfinite(q[0][i][j]))){
+			 printf("\n %f  %f  %f  %f  %f \n", q[0][i][j] , neu_c , neu_m , In[i][j] , Ne[i][j]);
+            }
+        // printf("Source = %f \n " , source_accu[i][j]);
+
+    }
+}
+}else{
+
+for ( i = 0 ; i < nc_row ; i++){
+            for( j = 0 ; j< nc_col ; j++){
+
+ source_accu[i][j] = 0.0;
+    
+    }
+}
+}
+
+        printf("SOURCE = %f\n", source_accu[(int)(nc_row/2)][(int)(nc_col/2)] );
+
         free(drex); free(drey); free(centroid_x); free(centroid_y);
 
 
 }
 
-
-
 // Lax- Fedrich
-
-
-
 void LFflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,double mspc[nc_row][nc_col], int f_row , int f_col, double Flux[4][f_row][f_col]){
 
 
@@ -1931,7 +2130,7 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 				sing_prmcalculate(T_QL,GAMMA,&rL,&uL,&vL,&pL);
 				sing_prmcalculate(T_QR,GAMMA,&rR,&uR,&vR,&pR );
 
-
+                // USE FUNCTION :: CHANGE
                 fil[0][m][n] = rL*uL;
 				fil[1][m][n] = rL*uL*uL+pL ;
 				fil[2][m][n] = rL*uL*vL ;
@@ -1948,8 +2147,6 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
 				// Calculate Smax from Roes Average
 
 				 // Calculate Roe Averages
-
-
                 HL = ( qil[3][m][n] + pL ) / rL;
                 HR = ( qir[3][m][n] + pR ) / rR;
 
@@ -1957,7 +2154,7 @@ void RSflux(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4
                     u = (uL+RT*uR)/(1+RT);
                     v = (vL+RT*vR)/(1+RT);
                     H = ( HL+RT* HR)/(1+RT);
-                    a = sqrt( (GAMMA-1)*(H-(u*u+v*v)/2) );
+                    a = sqrt( (GAMMA-1)*(H-(u*u+v*v)/2) ); // GAMMA CHANGES FOR CALORICALLY IMPERFECT GAS
                     smax[m][n] = fabs(sqrt(u*u + v*v)) + a ;
 
 
