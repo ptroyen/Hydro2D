@@ -37,8 +37,8 @@
 
 
 // BASIC INITIALIZATION
-#define ncx 200
-#define ncy 300
+#define ncx 20
+#define ncy 30
 #define nx  ncx+1
 #define ny  ncy+1
 #define nc_row ncy
@@ -253,6 +253,8 @@ int main(){
         }
     }
         printf("INITIAL VARIABLES WRITTEN ON initial.txt\n");
+
+    fclose(fpini);
 
 
 

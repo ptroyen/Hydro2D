@@ -395,7 +395,7 @@ void Flux_M(int nrec_row , int nrec_col , double qre[4][nrec_row][nrec_col] ,dou
     //   (*c)[y][z] = malloc(sizeof(double[x][y][z]));
     //	double (*dx) = malloc(sizeof(double[nc_col])) , (*dy) = malloc(sizeof(double[nc_row]));
 
-
+    FILE *fpchk ;
 
     // Real cells
     // flux and accumulation initialization
@@ -640,7 +640,7 @@ u[nc_row-2][nc_col-1] = u[nc_row-2][nc_col-4];  u[nc_row-2][nc_col-2] = u[nc_row
 v[nc_row - 1][nc_col-1] = v[nc_row - 1][nc_col-4];  v[nc_row - 1][nc_col-2] = v[nc_row - 1][nc_col-3];
 v[nc_row - 2][nc_col-1] = v[nc_row - 2][nc_col-4];  v[nc_row - 2][nc_col-2] = v[nc_row - 2][nc_col-3];
 r[nc_row - 1][nc_col-1] = r[nc_row - 1][nc_col-4];  r[nc_row - 1][nc_col-2] = r[nc_row - 1][nc_col-3];
-r[nc_row - 2][nc_col-1] = r[nc_row - 2][nc_col-4];  r[nc_row - 2][nc_col-2] = p[nc_row - 2][nc_col-3];
+r[nc_row - 2][nc_col-1] = r[nc_row - 2][nc_col-4];  r[nc_row - 2][nc_col-2] = r[nc_row - 2][nc_col-3];
 p[nc_row - 1][nc_col-1] = p[nc_row - 1][nc_col-4];  p[nc_row - 1][nc_col-2] = p[nc_row - 1][nc_col-3];
 p[nc_row - 2][nc_col-1] = p[nc_row - 2][nc_col-4];  p[nc_row - 2][nc_col-2] = p[nc_row - 2][nc_col-3];
 
@@ -725,6 +725,7 @@ double dxr, dxl, dyu, dyd ;
     	creq_y[i] = dt / (dys[i]);
 
     }
+
 
 
 
@@ -935,6 +936,22 @@ double dxr, dxl, dyu, dyd ;
 
 // void HLLC(int nc_row , int nc_col , double Qil[4][nc_row][nc_col],double Qir[4][nc_row][nc_col],double GAMMA, char DIR ,int f_row , int f_col, double Flux[4][f_row][f_col]);
 
+
+// Save Properties/ flux r and l with ghost cells as well // Try tecplot format
+
+
+           fpchk = fopen("output/check.txt", "w+");
+           fprintf(fpchk,"Check the flux and properties\n") ;
+           
+           for (i=0; i < nc_row ; i++){
+                for (j=0; j < nc_col ; j++){
+                    fprintf(fpchk,"%0.12f   %0.12f   %0.12f  %0.12f  %0.12f  %0.12f  %0.12f  %0.12f  %0.12f  %0.12f\n",
+                            centroid_x[j],centroid_y[i],r[i][j],u[i][j],v[i][j],p[i][j],qilx[3][i][j],qirx[3][i][j],qily[3][i][j],qiry[3][i][j]);
+                }
+           }
+           fclose(fpchk);
+
+           scanf("%d",&i);
 
 
 // USE HLLC
